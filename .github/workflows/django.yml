@@ -44,9 +44,9 @@ jobs:
 
       - name: Grant MySQL Privileges
         run: |
-          mysql -h 127.0.0.1 -u root -p${{ secrets.MYSQL_ROOT_PASSWORD }} -e "GRANT ALL PRIVILEGES ON chatapp.* TO 'chatapp'@'%' IDENTIFIED BY 'password';"
-          mysql -h 127.0.0.1 -u root -p${{ secrets.MYSQL_ROOT_PASSWORD }} -e "GRANT ALL PRIVILEGES ON test_chatapp.* TO 'chatapp'@'%' IDENTIFIED BY 'password';"
-
+          sleep 10
+          mysql -h 127.0.0.1 -u root -ppassword -e "GRANT ALL PRIVILEGES ON chatapp.* TO 'chatapp'@'%' IDENTIFIED BY 'password';"
+          mysql -h 127.0.0.1 -u root -ppassword -e "GRANT ALL PRIVILEGES ON test_chatapp.* TO 'chatapp'@'%' IDENTIFIED BY 'password';"
       - name: Run Tests
         run: |
           python manage.py test ChatApp.tests
