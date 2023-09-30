@@ -13,6 +13,8 @@ jobs:
     services:
       mysql:
         image: mysql:8.0
+        volumes:
+           - /var/run/mysqld:/var/run/mysqld
         env:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: chatapp 
