@@ -20,10 +20,10 @@ jobs:
           MYSQL_DATABASE: chatapp
           MYSQL_USER: chatapp
           MYSQL_PASSWORD: password
+          MYSQL_INIT_CONNECT: 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'
         ports:
           - 3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-        command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
 
     strategy:
       max-parallel: 4
