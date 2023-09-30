@@ -1,0 +1,44 @@
+[
+  {
+    "model": "ChatApp.conversation",
+    "pk": 1,
+    "fields": {
+      "user1": 2,
+      "user2": 1
+    }
+  },
+  {
+    "model": "ChatApp.customuser",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$yyQtIwnVCD3MaObID9hGhy$yzTmAm8aEey0rmi3gVhQWb2Oh6NK8mOcCHUGa3/MX48=",
+      "last_login": "2023-09-29T19:52:52.201Z",
+      "is_superuser": false,
+      "email": "Mojtaba.zaferanloo@gmail.com",
+      "first_name": "Mojtaba",
+      "last_name": "Zaferanloo",
+      "date_joined": "2023-09-29T19:41:44.523Z",
+      "is_active": true,
+      "is_staff": false,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "ChatApp.customuser",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$4wFKHuhqz64GndHXMywk3V$AfqVJC/0omUZ6IJMPNTN1hUlDymhu80clev115vn4Fo=",
+      "last_login": "2023-09-29T19:53:31.379Z",
+      "is_superuser": false,
+      "email": "mojtaba.zaferanloo@hotmail.com",
+      "first_name": "Modrix",
+      "last_name": "Zozo",
+      "date_joined": "2023-09-29T19:53:31.313Z",
+      "is_active": true,
+      "is_staff": false,
+      "groups": [],
+      "user_permissions": []
+    }
+  }
+]

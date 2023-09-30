@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="m-10">
+        <!-- Greeting message and Logout button container -->
+        <div class="flex items-center justify-between mb-4">
+            <!-- Greeting message -->
+            <h1 class="text-3xl font-semibold">Hello, {{ request.user.first_name }}!</h1>
+            <!-- Logout button (small and inline) -->
+            <a href="{% url 'chat:logout' %}"
+               class="py-1 px-2 bg-red-500 text-white rounded hover:bg-red-600">Logout</a>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-4">Your Conversations</h2>
+        <div class="space-y-1">
+            {% if conversations %}
+                {% for conversation in conversations %}
+                    <div class="bg-white shadow block hover:bg-gray-100 transition duration-300 ease-in-out rounded ">
+                        <a href="{% url 'chat:view_conversation' conversation.id %}">
+                            <div class="flex justify-between items-center p-4">
+                            <span class="text-m">
+                                    {{ conversation.participant.first_name }}
+                                    {{ conversation.participant.last_name }}
+                            </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke="currentColor" class="h-6 w-6 text-gray-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="bg-white shadow rounded-lg p-4">
+                    <p class="text-gray-600">No Conversations</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <a href="{% url 'chat:start_conversation' %}"
+           class="block mt-4 py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600">Start a New
+            Conversation</a>
+    </div>
+{% endblock %}

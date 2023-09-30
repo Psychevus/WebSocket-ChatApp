@@ -1,0 +1,26 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css">
+    <link rel="stylesheet" href="{% static 'chat/css/styles.css' %}">
+
+    <title>{% block title %}Your App{% endblock %}</title>
+</head>
+<body class="bg-gray-50">
+<header>
+</header>
+
+<main>
+    {% block content %}
+    {% endblock %}
+</main>
+
+<footer>
+    <!-- Footer content here -->
+</footer>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="flex flex-col h-screen">
+        <div id="conversation-data" data-conversation-id="{{ conversation.id }}"></div>
+        <div id="currentuser-data" data-currentuser-id="{{ request.user.id }}"></div>
+        <div id="emailuser-data" data-emailuser-id="{{ request.user }}"></div>
+
+        <!-- Conversation header -->
+        <div class="bg-green-500 p-2 shadow-lg flex items-center justify-between">
+            <a href="{% url 'chat:conversations_list' %}" class="text-white flex items-center">
+                <img src="{% static 'chat/icons/back-arrow.svg' %}" alt="Back" width="24" height="24">
+                <span class="ml-2">{{ participant.email }}</span>
+            </a>
+        </div>
+
+
+        <!-- Chat messages container -->
+        <div class="flex-grow bg-white p-4 overflow-y-auto text-black">
+            <ul id="chat-messages" class="space-y-2">
+                {% for message in messages reversed %}
+                    <li class="flex flex-row  {% if message.sender_email == request.user.email %}justify-end{% else %}justify-start{% endif %}">
+                        <div class="{% if message.sender_email == request.user.email %}message-container-right{% else %}message-container-left{% endif %}">
+                            <div class="message-bubble shadow-xl">
+                                {{ message.message }}
+                                <div class="timestamp">{{ message.formatted_timestamp }}</div>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Message input and send button -->
+        <div class="bg-white p-3">
+            <form id="chat-form" class="flex space-x-2">
+                {% csrf_token %}
+                <input
+                        type="text"
+                        id="message-input"
+                        placeholder="Type your message..."
+                        class="flex-grow border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-blue-500 text-black">
+                <button
+                        type="submit"
+                        class="bg-blue-500 text-white px-4 rounded-lg hover:bg-blue-600 transition duration-300 ease-in-out">
+                    <img src="{% static 'chat/icons/send.svg' %}" alt="Back" width="24" height="24">
+
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{% static 'chat/js/chat.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="m-10">
+        <h1 class="text-3xl font-semibold mb-4">Start a New Conversation</h1>
+        <div class="bg-white shadow rounded-lg p-4">
+            <form method="post" id="start-conversation-form">
+                {% csrf_token %}
+                <!-- Add a search input for users -->
+                <label for="user-search" class="block text-gray-600">Search for Participants:</label>
+                <input type="text" id="user-search" class="w-full p-2 border rounded mt-2" placeholder="Search users...">
+
+                <!-- Display search results here -->
+                <div id="search-results" class="mt-2"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display search results on user input
+        const userSearchInput = document.getElementById('user-search');
+        const searchResultsContainer = document.getElementById('search-results');
+        const startConversationForm = document.getElementById('start-conversation-form');
+
+        userSearchInput.addEventListener('input', function () {
+            const searchTerm = userSearchInput.value.trim();
+
+            // Clear previous search results
+            searchResultsContainer.innerHTML = '';
+
+            // Perform AJAX request to search for users
+            if (searchTerm) {
+                fetch(`/search-users/?q=${searchTerm}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(user => {
+                            const resultItem = document.createElement('div');
+                            resultItem.textContent = user.email;
+                            resultItem.classList.add('cursor-pointer', 'hover:bg-gray-100', 'p-2', 'rounded');
+
+                            resultItem.addEventListener('click', function () {
+                                // Update the form field name to match the form
+                                const participantsInput = document.createElement('input');
+                                participantsInput.type = 'hidden';
+                                participantsInput.name = 'participants';  // Name it 'participants' to match your form field name
+                                participantsInput.value = user.id;
+                                startConversationForm.appendChild(participantsInput);
+
+                                // Submit the form to create the conversation
+                                startConversationForm.submit();
+                            });
+
+                            searchResultsContainer.appendChild(resultItem);
+                        });
+                    });
+            }
+        });
+    </script>
+{% endblock %}

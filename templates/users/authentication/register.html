@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+    <div class="container flex justify-center items-center h-full p-8">
+        <section class="bg-white p-7 w-full bg-gray-50 dark:bg-gray-900 fade-in">
+            <div class="flex flex-col items-center justify-center mx-auto">
+                <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+                    <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+                        <h1 class="text-2xl font-normal mb-4 text-center">Create your account</h1>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label for="id_first_name"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">First
+                                    Name</label>
+                                <input type="text" id="id_first_name" name="first_name"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       placeholder="Enter your first name">
+                            </div>
+                            <div class="mb-4">
+                                <label for="id_last_name"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Last
+                                    Name</label>
+                                <input type="text" id="id_last_name" name="last_name"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       placeholder="Enter your last name">
+                            </div>
+                            <div class="mb-4">
+                                <label for="id_email"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
+                                <input type="email" id="id_email" name="email"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       placeholder="Enter your email">
+                            </div>
+                            <div class="mb-4">
+                                <label for="id_password1"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
+                                <input type="password" name="password1" id="password1"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       placeholder="Enter your password">
+                            </div>
+                            <div class="mb-4">
+                                <label for="id_password2"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm
+                                    Password</label>
+                                <input type="password" name="password2" id="password2"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       placeholder="Confirm your password">
+                            </div>
+                            <button type="submit" class="w-full py-2 px-4 button-golden mt-4">
+                                Register
+                            </button>
+                            {% if form.errors %}
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        {% for field, errors in form.errors.items %}
+                                            {% for error in errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+
+                        </form>
+                        <p class="text-sm font-light text-gray-500 dark:text-gray-400">Already have an account?
+                            <a href="{% url 'chat:login' %}"
+                               class="font-medium text-primary-600 hover:underline dark:text-primary-500">Log in
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}

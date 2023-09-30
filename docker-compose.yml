@@ -1,0 +1,28 @@
+version: '3'
+services:
+  web:
+    image: chatapp-django-image
+    container_name: your-django-container
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./WebSocketChatApp:/app
+    depends_on:
+      - db
+    environment:
+      - DJANGO_SETTINGS_MODULE=WebSocketChatApp.settings
+      - DEBUG=True
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+  db:
+    image: mariadb:10.4.28  # Use the MariaDB 10.4.28 image
+    container_name: your-mariadb-container
+    environment:
+      MYSQL_DATABASE: chatapp_db  # Replace with your database name
+      MYSQL_USER: chatapp_user  # Replace with your database user
+      MYSQL_PASSWORD: chatapp_password  # Replace with your database password
+      MYSQL_ROOT_PASSWORD: root_password  # Replace with your root password
+    ports:
+      - "3306:3306"  # Map MariaDB port
+    volumes:
+      - ./mysql_data:/var/lib/mysql  # Mount MariaDB data directory for persistence

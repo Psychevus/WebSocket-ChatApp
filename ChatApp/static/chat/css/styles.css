@@ -1,0 +1,49 @@
+/* Style for user's messages (right-aligned) */
+.justify-end {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Style for other users' messages (left-aligned) */
+.justify-start {
+    display: flex;
+    justify-content: flex-start;
+}
+
+/* Style for message container left*/
+.message-container-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+    max-width: 70%;
+    min-width: 20%;
+}
+
+/* Style for message container right */
+.message-container-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    position: relative;
+    max-width: 70%;
+    min-width: 20%;
+}
+
+/* Style for message bubbles */
+.message-bubble {
+    font-size: 17px;
+    max-width: 100%;
+    padding: 8px 12px 8px 12px;
+    border-radius: 10px;
+    word-wrap: break-word;
+    background-color: #007BFF;
+    color: white;
+}
+
+/* Style for timestamps */
+.timestamp {
+    font-size: 10px;
+    text-align: right;
+    color: #FFFFFF;
+}
