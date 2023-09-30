@@ -14,10 +14,13 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root_password
-          MYSQL_DATABASE: test_database
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: chatapp 
+          MYSQL_USER: chatapp
+          MYSQL_PASSWORD: password
         ports:
-          - 3306:3306
+          - 3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     strategy:
       max-parallel: 4
       matrix:
