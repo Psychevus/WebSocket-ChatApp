@@ -172,7 +172,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'ChatApp': {  # Replace 'ChatApp' with the actual name of your app
+        'ChatApp': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
