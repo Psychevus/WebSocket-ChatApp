@@ -5,7 +5,9 @@ from datetime import datetime
 import redis
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.postgres.search import SearchVector
 from django.db.models import Q
+from django.db.models.functions import Length
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
@@ -182,14 +184,18 @@ def start_conversation(request):
 
 # ---------------------------- Search users by email ----------------------------
 
+
 @login_required
 @csrf_exempt
-@ratelimit(key='user', rate='5/m', method='GET', block=True)
 def search_users(request):
-    if 'q' in request.GET:
-        search_term = request.GET['q']
-        users = CustomUser.objects.filter(email__icontains=search_term).exclude(id=request.user.id)[:10]
-        user_data = [{'id': user.id, 'email': user.email} for user in users]
-        return JsonResponse(user_data, safe=False)
-    else:
+    try:
+        if 'q' in request.GET:
+            search_term = request.GET['q'].strip()
+            if search_term:
+                search_query = Q(email__icontains=search_term)
+                users = CustomUser.objects.filter(search_query).exclude(id=request.user.id)[:10]
+                user_data = [{'id': user.id, 'email': user.email} for user in users]
+                return JsonResponse(user_data, safe=False)
         return JsonResponse([], safe=False)
+    except Exception as e:
+        return JsonResponse({'error': 'An error occurred while processing the request'}, status=500)

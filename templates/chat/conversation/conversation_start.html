@@ -8,15 +8,18 @@
                 {% csrf_token %}
                 <!-- Add a search input for users -->
                 <label for="user-search" class="block text-gray-600">Search for Participants:</label>
-                <input type="text" id="user-search" class="w-full p-2 border rounded mt-2" placeholder="Search users...">
+                <input type="text" id="user-search" class="w-full p-2 border rounded mt-2"
+                       placeholder="Search users...">
 
                 <!-- Display search results here -->
                 <div id="search-results" class="mt-2"></div>
             </form>
         </div>
     </div>
-
     <script>
+        // Store selected user IDs in an array
+        const selectedUsers = [];
+
         // Fetch and display search results on user input
         const userSearchInput = document.getElementById('user-search');
         const searchResultsContainer = document.getElementById('search-results');
@@ -31,29 +34,46 @@
             // Perform AJAX request to search for users
             if (searchTerm) {
                 fetch(`/search-users/?q=${searchTerm}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            // Handle error responses
+                            throw new Error(`Error: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         data.forEach(user => {
-                            const resultItem = document.createElement('div');
-                            resultItem.textContent = user.email;
-                            resultItem.classList.add('cursor-pointer', 'hover:bg-gray-100', 'p-2', 'rounded');
+                            // Check if the user is already selected
+                            if (!selectedUsers.includes(user.id)) {
+                                const resultItem = document.createElement('div');
+                                resultItem.textContent = user.email;
+                                resultItem.classList.add('cursor-pointer', 'hover:bg-gray-100', 'p-2', 'rounded');
 
-                            resultItem.addEventListener('click', function () {
-                                // Update the form field name to match the form
-                                const participantsInput = document.createElement('input');
-                                participantsInput.type = 'hidden';
-                                participantsInput.name = 'participants';  // Name it 'participants' to match your form field name
-                                participantsInput.value = user.id;
-                                startConversationForm.appendChild(participantsInput);
+                                resultItem.addEventListener('click', function () {
+                                    // Add the user to the selected users array
+                                    selectedUsers.push(user.id);
 
-                                // Submit the form to create the conversation
-                                startConversationForm.submit();
-                            });
+                                    // Update the form field name to match the form
+                                    const participantsInput = document.createElement('input');
+                                    participantsInput.type = 'hidden';
+                                    participantsInput.name = 'participants';  // Name it 'participants' to match your form field name
+                                    participantsInput.value = user.id;
+                                    startConversationForm.appendChild(participantsInput);
 
-                            searchResultsContainer.appendChild(resultItem);
+                                    // Submit the form to create the conversation
+                                    startConversationForm.submit();
+                                });
+
+                                searchResultsContainer.appendChild(resultItem);
+                            }
                         });
+                    })
+                    .catch(error => {
+                        // Handle the error here (e.g., display an error message)
+                        console.error(error);
                     });
             }
         });
+
     </script>
 {% endblock %}
