@@ -71,11 +71,11 @@ WSGI_APPLICATION = 'WebSocketChatApp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'chatapp',  # Replace with your MySQL database name
-        'USER': 'chatapp',  # Replace with your MySQL username
-        'PASSWORD': 'chatapppassword',  # Replace with your MySQL password
-        'HOST': 'chatapp-db',  # Replace with your MySQL server host
-        'PORT': '3306',  # Replace with your MySQL server port
+        'NAME': 'chatapp', 
+        'USER': 'chatapp',  
+        'PASSWORD': 'chatapppassword',  
+        'HOST': 'chatapp-db',  
+        'PORT': '3306',  
         'OPTIONS': {
             'unix_socket': '/var/run/mysqld/mysqld.sock',
         },
