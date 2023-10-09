@@ -73,9 +73,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'chatapp',  # Replace with your MySQL database name
         'USER': 'chatapp',  # Replace with your MySQL username
-        'PASSWORD': 'password',  # Replace with your MySQL password
-        'HOST': 'localhost',  # Replace with your MySQL server host
+        'PASSWORD': 'chatapppassword',  # Replace with your MySQL password
+        'HOST': 'chatapp-db',  # Replace with your MySQL server host
         'PORT': '3306',  # Replace with your MySQL server port
+        'OPTIONS': {
+            'unix_socket': '/var/run/mysqld/mysqld.sock',
+        },
     }
 }
 

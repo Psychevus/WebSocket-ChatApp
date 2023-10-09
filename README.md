@@ -1,6 +1,5 @@
 # Real-Time Chat Application
 
-
 ## Overview
 
 This is a real-time chat application built using Python, Django, and Redis. It allows users to send and receive messages in real-time, utilizing WebSockets for instant communication. The application is designed with a focus on scalability, performance, and security.
@@ -14,19 +13,15 @@ This is a real-time chat application built using Python, Django, and Redis. It a
 - Logging and monitoring for tracking application performance.
 - Detailed testing for ensuring application reliability.
 
-## Getting Started
+## Getting Started with Docker
 
 ### Prerequisites
 
 Before you begin, ensure you have met the following requirements:
 
-- Python 3.x
-- Django
-- Redis
-- MySQL
-- Docker (for local development)
+- Docker installed on your system.
 
-### Installation
+### Running the Application with Docker
 
 1. Clone the repository:
 
@@ -35,38 +30,19 @@ Before you begin, ensure you have met the following requirements:
    cd WebSocket-ChatApp
    ```
 
-2. Create a virtual environment and activate it:
+2. Build the Docker image:
 
    ```shell
-   python -m venv venv
-   source venv/bin/activate
+   docker-compose build
    ```
 
-3. Install project dependencies:
+3. Start the Docker containers:
 
    ```shell
-   pip install -r requirements.txt
+   docker-compose up
    ```
 
-4. Configure environment variables by copying the `.env.example` file to `.env` and customizing it:
-
-   ```shell
-   cp .env.example .env
-   ```
-
-5. Apply database migrations:
-
-   ```shell
-   python manage.py migrate
-   ```
-
-6. Start the development server:
-
-   ```shell
-   python manage.py runserver
-   ```
-
-7. Access the application in your browser at `http://localhost:8000`.
+4. Access the application in your browser at `http://localhost:8000`.
 
 ## Usage
 
@@ -80,7 +56,7 @@ Before you begin, ensure you have met the following requirements:
 To run tests, use the following command:
 
 ```shell
-python manage.py test
+docker-compose exec chatapp-django python manage.py test
 ```
 
 ## Deployment

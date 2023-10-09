@@ -1,28 +1,43 @@
 version: '3'
 services:
-  web:
-    image: chatapp-django-image
-    container_name: your-django-container
+  chatapp-django:
+    image: modrix/chatapp-django-image:v1.0
+    container_name: chatapp-django
     ports:
       - "8000:8000"
     volumes:
-      - ./WebSocketChatApp:/app
+      - .:/app
     depends_on:
-      - db
+      - chatapp-db
+      - chatapp-redis
     environment:
-      - DJANGO_SETTINGS_MODULE=WebSocketChatApp.settings
-      - DEBUG=True
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      DJANGO_SETTINGS_MODULE: WebSocketChatApp.settings
+      DEBUG: "True"
+    healthcheck:
+      test: [ "CMD", "python", "manage.py", "check" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
 
-  db:
-    image: mariadb:10.4.28  # Use the MariaDB 10.4.28 image
-    container_name: your-mariadb-container
+  chatapp-db:
+    image: mysql:5.7
+    container_name: chatapp-db
     environment:
-      MYSQL_DATABASE: chatapp_db  # Replace with your database name
-      MYSQL_USER: chatapp_user  # Replace with your database user
-      MYSQL_PASSWORD: chatapp_password  # Replace with your database password
-      MYSQL_ROOT_PASSWORD: root_password  # Replace with your root password
+      MYSQL_DATABASE: chatapp
+      MYSQL_USER: chatapp
+      MYSQL_PASSWORD: chatapppassword
+      MYSQL_ROOT_PASSWORD: root_password
     ports:
-      - "3306:3306"  # Map MariaDB port
+      - "3306:3306"
     volumes:
-      - ./mysql_data:/var/lib/mysql  # Mount MariaDB data directory for persistence
+      - mysql_data:/var/lib/mysql
+
+  chatapp-redis:
+    image: redis:6.2
+    container_name: chatapp-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql_data:
