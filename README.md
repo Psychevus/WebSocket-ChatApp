@@ -44,6 +44,8 @@ Prometheus will expose metrics on `http://localhost:9090` and Grafana will be av
 
 ## Telemetry
 Metrics are exported using OpenTelemetry and Prometheus. Grafana Live can be used to visualise latency in real time. The Prometheus scrape endpoint is exposed on port `8001` from the Django container.
+The metrics HTTP server exposes `/metrics` so Prometheus can scrape `http://localhost:8001/metrics`.
+Import `docs/grafana-dashboard.json` into Grafana to view a panel showing the P95 WebSocket latency.
 
 Tracing is also enabled. Run the app with:
 ```bash
