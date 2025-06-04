@@ -1,9 +1,12 @@
+import os
 from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
 from django.test import TransactionTestCase, override_settings
+from unittest.mock import patch
 
 from WebSocketChatApp.routing import application
 from ChatApp.models import CustomUser, Conversation
+from ChatApp.dlp import run_dlp_hook
 
 
 def block_if_contains_forbidden(message, sender=None):
@@ -31,3 +34,19 @@ class DLPHookTestCase(TransactionTestCase):
             await communicator.disconnect()
 
         async_to_sync(inner)()
+
+
+class NightfallDLPHookTestCase(TransactionTestCase):
+    @patch('ChatApp.dlp_plugins.requests.post')
+    def test_nightfall_scan_plugin(self, mock_post):
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {'findings': ['ssn']}
+
+        with patch.dict(os.environ, {'NIGHTFALL_API_KEY': 'dummy'}):
+            result = async_to_sync(run_dlp_hook)(
+                'SSN 123-45-6789',
+                None,
+                'ChatApp.dlp_plugins.nightfall_scan'
+            )
+            self.assertFalse(result)
+

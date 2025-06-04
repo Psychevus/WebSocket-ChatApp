@@ -1,7 +1,10 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+import hashlib
+import json
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 class CustomUserManager(BaseUserManager):
@@ -81,6 +84,8 @@ class AuditLog(models.Model):
     user = models.ForeignKey(CustomUser, null=True, on_delete=models.SET_NULL)
     action = models.CharField(max_length=64)
     details = models.JSONField()
+    previous_hash = models.CharField(max_length=64, blank=True)
+    hash = models.CharField(max_length=64, blank=True)
 
     class Meta:
         ordering = ["-timestamp"]
@@ -88,6 +93,21 @@ class AuditLog(models.Model):
     def save(self, *args, **kwargs):
         if self.pk:
             raise ValueError("AuditLog entries cannot be modified")
+        if not self.timestamp:
+            self.timestamp = timezone.now()
+        last = AuditLog.objects.order_by("-id").first()
+        self.previous_hash = last.hash if last else ""
+        data = json.dumps(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "user_id": self.user_id,
+                "action": self.action,
+                "details": self.details,
+                "previous_hash": self.previous_hash,
+            },
+            sort_keys=True,
+        )
+        self.hash = hashlib.sha256(data.encode()).hexdigest()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

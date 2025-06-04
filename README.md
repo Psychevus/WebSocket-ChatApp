@@ -15,11 +15,12 @@ The WebSocket Chat Application demonstrates real-time messaging using Django, Dj
   an X25519 handshake. Messages are encrypted client-side before being sent.
 - Group conversations are encrypted at rest with BYOK-managed keys. Tenant keys
   are stored in AWS KMS following a pattern similar to Slack EKM.
-- Pluggable data-loss-prevention hooks scan outgoing messages
+- Pluggable data-loss-prevention hooks scan outgoing messages and can integrate
+  with external services like the Nightfall DLP API
 - Per-room retention policies with legal hold and S3 export
 - Ephemeral messages that self-destruct after a short TTL
 - Two-factor authentication for account logins
-- Immutable audit logs streamed to Kafka for SIEM integration
+- Immutable, SHA-chained audit logs streamed to Kafka for SIEM integration
 - Enterprise identity via SAML 2.0 and OpenID Connect
 - SCIM-based user provisioning
 - Role-based access control (Owner, Admin, Analyst)
@@ -109,6 +110,16 @@ SCIM_BEARER_TOKEN=<token for SCIM auth>
 TOTP_ENFORCE=True
 ```
 Ensure HTTPS is enabled and cookies are transmitted securely.
+
+### Data Loss Prevention
+
+Enable Nightfall DLP scanning by setting:
+
+```bash
+DLP_BEFORE_SEND_HOOK=ChatApp.dlp_plugins.nightfall_scan
+NIGHTFALL_API_KEY=<your Nightfall API key>
+```
+Messages will be inspected by Nightfall before delivery.
 
 ## Entra ID SAML + SCIM Setup
 

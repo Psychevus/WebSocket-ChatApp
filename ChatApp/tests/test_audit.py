@@ -16,6 +16,14 @@ class AuditLogTestCase(TestCase):
         entry = AuditLog.objects.get()
         self.assertEqual(entry.action, "message_sent")
         self.assertEqual(entry.user, self.admin)
+        self.assertTrue(entry.hash)
+        self.assertEqual(entry.previous_hash, "")
+
+        Message.objects.create(conversation=self.conv, sender=self.admin, content="hi again")
+        logs = AuditLog.objects.order_by("timestamp")
+        self.assertEqual(logs.count(), 2)
+        first, second = logs
+        self.assertEqual(second.previous_hash, first.hash)
 
     @patch('ChatApp.audit._get_producer', return_value=None)
     def test_audit_logs_view(self, mock_prod):
