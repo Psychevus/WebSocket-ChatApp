@@ -223,6 +223,8 @@ def audit_logs_view(request):
             'user': log.user.email if log.user else None,
             'action': log.action,
             'details': log.details,
+            'hash': log.hash,
+            'previous_hash': log.previous_hash,
         }
         for log in logs
     ]
