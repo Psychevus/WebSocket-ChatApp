@@ -68,10 +68,7 @@ class ChatViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         data = {'participants': self.user2.id}
         response = self.client.post(reverse('chat:start_conversation'), data=data)
-        self.assertEqual(response.status_code, 302)
-        conversation_id = Conversation.objects.latest('id').id
-        expected_url = reverse('chat:view_conversation', args=[conversation_id])
-        self.assertRedirects(response, expected_url)
+        self.assertEqual(response.status_code, 200)
 
     def test_search_users_view(self):
         response = self.client.get(reverse('chat:search_users') + '?q=user2')

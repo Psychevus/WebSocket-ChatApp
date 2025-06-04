@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-    <div class="flex flex-col h-screen">
+    <div class="flex flex-col h-screen bg-gradient-to-b from-gray-50 to-gray-200">
         <div id="conversation-data" data-conversation-id="{{ conversation.id }}"></div>
         <div id="currentuser-data" data-currentuser-id="{{ request.user.id }}"></div>
         <div id="emailuser-data" data-emailuser-id="{{ request.user }}"></div>
@@ -40,6 +40,7 @@
                         type="text"
                         id="message-input"
                         placeholder="Type your message..."
+                        autofocus
                         class="flex-grow border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-blue-500 text-black">
                 <button
                         type="submit"

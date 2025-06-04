@@ -1,90 +1,47 @@
-# Real-Time Chat Application
+# WebSocket Chat Application
 
 ## Overview
 
-This is a real-time chat application built using Python, Django, and Redis. It allows users to send and receive messages in real-time, utilizing WebSockets for instant communication. The application is designed with a focus on scalability, performance, and security.
+This project showcases a real-time chat platform built with Django and Django Channels. Redis is used for transient message queuing while conversations and messages are persisted in a relational database. Docker Compose provides a reproducible environment so the app can be launched with minimal setup.
 
 ## Features
 
-- Real-time messaging with WebSocket support.
-- User authentication with MySQL database.
-- API throttling for message delivery.
-- Proper error handling and form validation.
-- Logging and monitoring for tracking application performance.
-- Detailed testing for ensuring application reliability.
+- Bidirectional messaging over WebSockets
+- Persistent conversation and message history
+- Rate limiting on both HTTP views and WebSocket endpoints
+- Robust form validation and error logging
+- Containerised services for the application, database and Redis
 
-## Getting Started with Docker
+## Quick Start
 
 ### Prerequisites
+- Docker installed on your machine
 
-Before you begin, ensure you have met the following requirements:
-
-- Docker installed on your system.
-
-### Running the Application with Docker
-
-1. Clone the repository:
-
-   ```shell
-   git clone https://github.com/Psychevus/WebSocket-ChatApp.git
-   cd WebSocket-ChatApp
-   ```
-
-2. Build the Docker image:
-
-   ```shell
-   docker-compose build
-   ```
-
-3. Start the Docker containers:
-
-   ```shell
-   docker-compose up
-   ```
-
-4. Access the application in your browser at `http://localhost:8000`.
+### Run with Docker
+```bash
+git clone https://github.com/Psychevus/WebSocket-ChatApp.git
+cd WebSocket-ChatApp
+docker-compose build
+docker-compose up
+```
+The application will be available at `http://localhost:8000`.
 
 ## Usage
+- Register for an account then log in
+- Start a conversation with any other user
+- Chat in real time via an interactive WebSocket interface
 
-- Visit the application in your browser.
-- Sign up for an account using your name, last name, and email.
-- Log in to access your conversations or start a new one.
-- Enjoy real-time chat with other users.
-
-## Testing
-
-To run tests, use the following command:
-
-```shell
-docker-compose exec chatapp-django python manage.py test
+## Running Tests
+Use SQLite and the in-memory channel layer when executing tests:
+```bash
+docker-compose exec chatapp-django python manage.py test ChatApp.tests --settings=WebSocketChatApp.test_settings
 ```
 
 ## Deployment
-
-To deploy the application, follow these steps:
-
-1. Configure deployment settings in your chosen cloud platform.
-2. Set environment variables as specified in the `.env.example` file.
-3. Deploy the application according to your chosen platform's instructions.
-
-## API Throttling
-
-API calls for message delivery are throttled to ensure smooth operation. Throttling rules can be customized in the application settings.
-
-## Logging and Monitoring
-
-The application includes comprehensive logging and monitoring to track API calls and application performance. Logs are stored according to the specified format in the application settings.
+Adjust environment variables to suit your production environment and deploy using your preferred platform. The provided Docker configuration can be adapted for cloud container services.
 
 ## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-- Fork the repository.
-- Create a new branch.
-- Make your changes.
-- Test your changes.
-- Create a pull request.
+We welcome contributions! Please open pull requests against the `work` branch and ensure the test suite passes.
 
 ## License
-
-This project is licensed under the [MIT License](LICENSE).
+This project is available under the [MIT License](LICENSE).

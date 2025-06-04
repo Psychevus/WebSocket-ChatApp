@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from ChatApp.models import CustomUser, Conversation
+from ChatApp.models import CustomUser, Conversation, Message
 
 
 class CustomUserModelTestCase(TestCase):
@@ -36,3 +36,26 @@ class ConversationModelTestCase(TestCase):
         participants = self.conversation.get_participants()
         self.assertIn(self.user1, participants)
         self.assertIn(self.user2, participants)
+
+
+class MessageModelTestCase(TestCase):
+    def setUp(self):
+        self.user1 = CustomUser.objects.create_user(
+            email="msguser1@example.com",
+            password="password1",
+        )
+        self.user2 = CustomUser.objects.create_user(
+            email="msguser2@example.com",
+            password="password2",
+        )
+        self.conversation = Conversation.objects.create(user1=self.user1, user2=self.user2)
+
+    def test_message_creation(self):
+        message = Message.objects.create(
+            conversation=self.conversation,
+            sender=self.user1,
+            content="Hello",
+        )
+        self.assertEqual(message.conversation, self.conversation)
+        self.assertEqual(message.sender, self.user1)
+        self.assertEqual(message.content, "Hello")

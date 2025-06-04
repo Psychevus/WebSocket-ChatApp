@@ -47,3 +47,16 @@ class Conversation(models.Model):
 
     def get_participants(self):
         return [self.user1, self.user2]
+
+
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Message from {self.sender} at {self.timestamp}"

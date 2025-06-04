@@ -7,7 +7,7 @@ from django.urls import re_path
 
 from ChatApp import consumers
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ChatApp.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'WebSocketChatApp.settings')
 
 websocket_urlpatterns = [
     re_path(r'ws/chat/(?P<conversation_id>\w+)/$', consumers.ChatConsumer.as_asgi()),
