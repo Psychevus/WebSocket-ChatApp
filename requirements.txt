@@ -5,3 +5,4 @@ django_ratelimit>=3.0.2
 mysqlclient~=2.1.0
 celery>=5.3,<6
 django-allauth
+djangosaml2~=1.7.0
