@@ -59,7 +59,22 @@ celery -A WebSocketChatApp worker -B
 ```
 
 ## Deployment
-Update environment variables as required for your platform. The provided Docker configuration can be adapted for cloud container services.
+Update environment variables as required for your platform. The provided Docker configuration can be adapted for cloud container services. A Helm chart and Kustomize overlays are also available under `deploy/` for Kubernetes environments.
+
+### Kubernetes Deployment with Helm
+```bash
+helm install chatapp ./deploy/helm \
+  --set encryption.key=$(base64 -w0 <path to key>) \
+  --set saml.configPath=/etc/saml/config.json \
+  --set scim.bearerToken=$SCIM_TOKEN
+```
+The chart provisions MySQL and Redis alongside the Django application so you can get running in minutes.
+
+### Kustomize Overlays
+Example overlays are located in `deploy/kustomize/overlays/`. Build the base manifests and apply an overlay with:
+```bash
+kustomize build deploy/kustomize/overlays/example | kubectl apply -f -
+```
 
 ## Security Configuration
 A checklist of common security considerations is available in [OWASP_SECURITY.md](OWASP_SECURITY.md). Sensitive settings are read from environment variables such as:

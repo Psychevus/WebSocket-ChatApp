@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chatapp.fullname" . }}-mysql
+  labels:
+    app: {{ include "chatapp.name" . }}-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "chatapp.name" . }}-mysql
+  template:
+    metadata:
+      labels:
+        app: {{ include "chatapp.name" . }}-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: {{ .Values.mysql.image }}
+          env:
+            - name: MYSQL_DATABASE
+              value: {{ .Values.mysql.database }}
+            - name: MYSQL_USER
+              value: {{ .Values.mysql.user }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chatapp.fullname" . }}-secrets
+                  key: mysql-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chatapp.fullname" . }}-secrets
+                  key: mysql-root-password
+          ports:
+            - containerPort: 3306

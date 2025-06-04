@@ -1,0 +1,6 @@
+helmCharts:
+  - name: chatapp
+    path: ../../helm
+    releaseName: chatapp
+    version: 0.1.0
+    valuesFile: ../../helm/values.yaml

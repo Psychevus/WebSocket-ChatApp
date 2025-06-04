@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chatapp.fullname" . }}
+  labels:
+    app: {{ include "chatapp.name" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "chatapp.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "chatapp.name" . }}
+    spec:
+      containers:
+        - name: chatapp
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DJANGO_SETTINGS_MODULE
+              value: WebSocketChatApp.settings
+            - name: MYSQL_DATABASE
+              value: {{ .Values.mysql.database }}
+            - name: MYSQL_USER
+              value: {{ .Values.mysql.user }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chatapp.fullname" . }}-secrets
+                  key: mysql-password
+            - name: MYSQL_HOST
+              value: {{ include "chatapp.fullname" . }}-mysql
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: REDIS_HOST
+              value: {{ include "chatapp.fullname" . }}-redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: MESSAGE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chatapp.fullname" . }}-secrets
+                  key: encryption-key
+            - name: SAML_CONFIG_PATH
+              value: {{ .Values.saml.configPath }}
+            - name: SCIM_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chatapp.fullname" . }}-secrets
+                  key: scim-token
+          ports:
+            - containerPort: 8000
+          command: ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
