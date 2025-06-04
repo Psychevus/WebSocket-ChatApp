@@ -14,6 +14,7 @@ spec:
       labels:
         app: {{ include "chatapp.name" . }}
     spec:
+      terminationGracePeriodSeconds: 15
       containers:
         - name: chatapp
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -53,3 +54,7 @@ spec:
           ports:
             - containerPort: 8000
           command: ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "/app/scripts/pre_stop.sh"]
