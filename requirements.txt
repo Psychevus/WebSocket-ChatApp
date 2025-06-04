@@ -6,4 +6,4 @@ mysqlclient~=2.1.0
 celery>=5.3,<6
 django-allauth
 djangosaml2~=1.7.0
-django-scim2~=0.14.1
+django-scim2
