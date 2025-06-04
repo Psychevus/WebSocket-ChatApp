@@ -1,9 +1,11 @@
 import os
-from opentelemetry import metrics
+from opentelemetry import metrics, trace
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
-from prometheus_client import start_http_server
 from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 from opentelemetry.instrumentation.django import DjangoInstrumentor
+from prometheus_client import start_http_server
 
 metrics_port = int(os.getenv("METRICS_PORT", "8001"))
 start_http_server(port=metrics_port)
@@ -11,6 +13,11 @@ start_http_server(port=metrics_port)
 _reader = PrometheusMetricReader()
 _provider = MeterProvider(metric_readers=[_reader])
 metrics.set_meter_provider(_provider)
+
+tracer_provider = TracerProvider()
+span_processor = BatchSpanProcessor(ConsoleSpanExporter())
+tracer_provider.add_span_processor(span_processor)
+trace.set_tracer_provider(tracer_provider)
 
 DjangoInstrumentor().instrument()
 
