@@ -18,6 +18,34 @@ from WebSocketChatApp.telemetry import record_websocket_latency
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
+redis_client = redis.Redis(
+    host=getattr(settings, "REDIS_HOST", "localhost"),
+    port=int(getattr(settings, "REDIS_PORT", 6379)),
+    decode_responses=True,
+)
+
+
+@database_sync_to_async
+def register_conversation(cid: str):
+    try:
+        backend = settings.CHANNEL_LAYERS["default"].get("BACKEND", "")
+        if backend.endswith("InMemoryChannelLayer"):
+            return
+        redis_client.sadd("active_conversations", cid)
+    except Exception:
+        pass
+
+
+@database_sync_to_async
+def unregister_conversation(cid: str):
+    try:
+        backend = settings.CHANNEL_LAYERS["default"].get("BACKEND", "")
+        if backend.endswith("InMemoryChannelLayer"):
+            return
+        redis_client.srem("active_conversations", cid)
+    except Exception:
+        pass
+
 
 def check_rate_limit(rate, method='RATELIMIT_KEY'):
     def decorator(func):
@@ -69,19 +97,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
 
-            await self.channel_layer.group_add(
-                self.conversation_group_name,
-                self.channel_name
-            )
+        await self.channel_layer.group_add(
+            self.conversation_group_name,
+            self.channel_name
+        )
 
-            await self.accept()
-            logger.info(f"User {self.scope['user']} connected to conversation {self.conversation_id}")
+        await register_conversation(str(self.conversation_id))
+
+        await self.accept()
+        logger.info(
+            f"User {self.scope['user']} connected to conversation {self.conversation_id}"
+        )
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.conversation_group_name,
             self.channel_name
         )
+        await unregister_conversation(str(self.conversation_id))
         logger.info(f"User {self.scope['user']} disconnected from conversation {self.conversation_id}")
 
     @check_rate_limit(rate=1)
@@ -215,4 +248,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "sender_email": event.get("sender_email"),
             "key": event.get("key"),
         }))
+
+    async def chat_pre_stop(self, event):
+        await self.close(code=1001)
 
