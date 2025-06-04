@@ -2,5 +2,9 @@ apiVersion: v2
 name: chatapp
 version: 0.1.0
 description: WebSocket Chat Application
-appVersion: "1.0"
 type: application
+appVersion: "1.0"
+kubeVersion: ">=1.21.0-0"
+maintainers:
+  - name: ChatApp Maintainer
+    email: maintainers@example.com

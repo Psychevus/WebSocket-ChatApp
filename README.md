@@ -80,6 +80,12 @@ helm install chatapp ./deploy/helm \
   --set saml.configPath=/etc/saml/config.json \
   --set scim.bearerToken=$SCIM_TOKEN
 ```
+Environment specific values are provided. Select a file with `-f`:
+```bash
+helm install chatapp ./deploy/helm -f deploy/helm/values-dev.yaml
+# or
+helm install chatapp ./deploy/helm -f deploy/helm/values-prod.yaml
+```
 The chart provisions MySQL and Redis alongside the Django application so you can get running in minutes.
 
 ### Kustomize Overlays
