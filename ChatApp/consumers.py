@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.conf import settings
 from .models import Conversation, Message
 from .dlp import run_dlp_hook
+from WebSocketChatApp.telemetry import record_websocket_latency
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +182,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         message = event["message"]
+
+        start_time = timezone.datetime.fromisoformat(event["timestamp"])
+        latency_ms = (timezone.now() - start_time).total_seconds() * 1000
+        record_websocket_latency(latency_ms)
 
         await self.send(text_data=json.dumps({
             "message": message,
