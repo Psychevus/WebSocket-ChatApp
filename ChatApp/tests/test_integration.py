@@ -16,15 +16,16 @@ class ChatIntegrationTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_start_conversation_form_valid(self):
-        data = {'participants': self.user2.id}
+        user3 = CustomUser.objects.create_user(email="user3@example.com", password="password3")
+        data = {'participants': user3.id}
         response = self.client.post(reverse('chat:start_conversation'), data=data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(Conversation.objects.count(), 1)
+        self.assertEqual(Conversation.objects.count(), 2)
 
     def test_start_conversation_form_existing_conversation(self):
         data = {'participants': self.user2.id}
         response = self.client.post(reverse('chat:start_conversation'), data=data)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(Conversation.objects.count(), 1)
 
     def test_conversations_list_view(self):

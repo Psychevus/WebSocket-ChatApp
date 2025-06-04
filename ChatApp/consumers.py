@@ -1,11 +1,14 @@
 import asyncio
 import json
 import logging
-from datetime import datetime
 import redis
 
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
 from django.core.cache import cache
+from django.utils import timezone
+
+from .models import Conversation, Message
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +76,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message_content = data['message']
         sender = self.scope.get('user')
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        timestamp = timezone.now()
 
         logger.info(f"Received message: '{message_content}' from User {sender}")
 
@@ -84,7 +87,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message_content,
                 'sender_id': sender.id if sender else None,
                 'sender_email': sender.email if sender else None,
-                'timestamp': timestamp,
+                'timestamp': timestamp.isoformat(),
             }
         )
 
@@ -94,7 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message_content,
                 'sender_id': sender.id if sender else None,
                 'sender_email': sender.email if sender else None,
-                'timestamp': timestamp,
+                'timestamp': timestamp.isoformat(),
             }
 
             message_json = json.dumps(message_data)
@@ -102,8 +105,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             with redis.StrictRedis(host="localhost", port=6379, db=0) as redis_client:
                 redis_client.lpush(conversation_key, message_json)
 
+            conversation = await database_sync_to_async(Conversation.objects.get)(pk=self.conversation_id)
+            await database_sync_to_async(Message.objects.create)(
+                conversation=conversation,
+                sender=sender,
+                content=message_content,
+                timestamp=timestamp,
+            )
+
         except (redis.ConnectionError, Exception) as e:
-            logger.error(f"An error occurred while storing the message in Redis: {str(e)}")
+            logger.error(f"An error occurred while storing the message in Redis or DB: {str(e)}")
 
     async def chat_message(self, event):
         message = event["message"]

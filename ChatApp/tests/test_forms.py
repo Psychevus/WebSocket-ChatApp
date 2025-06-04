@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from ChatApp.models import CustomUser, Conversation
 from ChatApp.forms import StartConversationForm, CustomUserCreationForm, CustomAuthenticationForm
 
@@ -7,18 +7,23 @@ class StartConversationFormTest(TestCase):
     def test_start_conversation_form_valid(self):
         user1 = CustomUser.objects.create_user(email="user1@example.com", password="password1")
         user2 = CustomUser.objects.create_user(email="user2@example.com", password="password2")
-        Conversation.objects.create(user1=user1, user2=user2)
+        factory = RequestFactory()
+        request = factory.post('/dummy')
+        request.user = user1
         data = {'participants': user2.id}
-        form = StartConversationForm(data=data, request=None)
+        form = StartConversationForm(data=data, request=request)
         self.assertTrue(form.is_valid())
 
     def test_start_conversation_form_existing_conversation(self):
         user1 = CustomUser.objects.create_user(email="user1@example.com", password="password1")
         user2 = CustomUser.objects.create_user(email="user2@example.com", password="password2")
         Conversation.objects.create(user1=user1, user2=user2)
+        factory = RequestFactory()
+        request = factory.post('/dummy')
+        request.user = user1
         data = {'participants': user2.id}
-        form = StartConversationForm(data=data, request=None)
-        self.assertTrue(form.is_valid())
+        form = StartConversationForm(data=data, request=request)
+        self.assertFalse(form.is_valid())
 
 
 class CustomUserCreationFormTest(TestCase):

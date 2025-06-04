@@ -13,16 +13,16 @@ class StartConversationForm(forms.Form):
         empty_label="---------",
     )
 
-    def clean_user2(self):
-        user2 = self.cleaned_data['user2']
+    def clean_participants(self):
+        participant = self.cleaned_data['participants']
         user1 = self._request.user
 
-        if user2 is not None:
-            existing_conversation = Conversation.objects.filter(user1=user1, user2=user2) | \
-                                    Conversation.objects.filter(user1=user2, user2=user1)
+        if participant is not None:
+            existing_conversation = Conversation.objects.filter(user1=user1, user2=participant) | \
+                                    Conversation.objects.filter(user1=participant, user2=user1)
             if existing_conversation.exists():
                 raise forms.ValidationError("A conversation with this participant already exists.")
-        return user2
+        return participant
 
     def __init__(self, *args, **kwargs):
         self._request = kwargs.pop('request', None)

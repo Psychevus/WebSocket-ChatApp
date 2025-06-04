@@ -25,12 +25,15 @@ function setupWebSocket(conversationId, currentUser, emailUser) {
         }));
 
         messageInputDom.value = '';
+        messageInputDom.focus();
     });
 
     // Scroll to the bottom when the page is loaded
     const chatMessages = document.querySelector('#chat-messages');
     window.addEventListener('load', () => {
         chatMessages.scrollIntoView({behavior: 'smooth', block: 'end'});
+        const messageInputDom = document.querySelector('#message-input');
+        messageInputDom.focus();
     });
 }
 

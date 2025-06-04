@@ -11,7 +11,6 @@ from django.db.models.functions import Length
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
 
@@ -23,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------- Register ----------------------------
 
-@csrf_exempt
 @ratelimit(key='ip', rate='5/h', method='POST', block=True)
 def register(request):
     if request.method == 'POST':
@@ -46,7 +44,6 @@ def register(request):
 
 # ---------------------------- Login ----------------------------
 
-@csrf_exempt
 @ratelimit(key='ip', rate='10/m', method='POST', block=True)
 def user_login(request):
     if request.method == 'POST':
@@ -79,7 +76,6 @@ def user_logout(request):
 # ---------------------------- Conversation List ----------------------------
 
 @login_required
-@csrf_exempt
 @ratelimit(key='user', rate='10/h', method='GET', block=True)
 def conversations_list(request):
     try:
@@ -137,7 +133,6 @@ def fetch_messages_from_redis(conversation):
 # ---------------------------- Conversation View ----------------------------
 
 @login_required
-@csrf_exempt
 @ratelimit(key='user', rate='5/m', method='GET', block=True)
 def conversation_view(request, conversation_id):
     conversation = get_object_or_404(Conversation, id=conversation_id)
@@ -160,10 +155,9 @@ def conversation_view(request, conversation_id):
 # ---------------------------- Start New Conversation ----------------------------
 
 @login_required
-@csrf_exempt
 def start_conversation(request):
     if request.method == 'POST':
-        form = StartConversationForm(request.POST)
+        form = StartConversationForm(request.POST, request=request)
         if form.is_valid():
             participants = form.cleaned_data['participants']
             existing_conversation = Conversation.objects.filter(
@@ -177,7 +171,7 @@ def start_conversation(request):
                 logger.info(f"Started a new conversation {conversation.id}.")
                 return redirect('chat:view_conversation', conversation_id=conversation.id)
     else:
-        form = StartConversationForm()
+        form = StartConversationForm(request=request)
 
     return render(request, 'chat/conversation/conversation_start.html', {'form': form})
 
@@ -186,7 +180,6 @@ def start_conversation(request):
 
 
 @login_required
-@csrf_exempt
 def search_users(request):
     try:
         if 'q' in request.GET:

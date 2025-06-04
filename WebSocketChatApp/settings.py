@@ -42,7 +42,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-RATETIME_USE_REQUEST_HEADER = True
+RATELIMIT_USE_REQUEST_HEADER = True
 
 ROOT_URLCONF = 'WebSocketChatApp.urls'
 
@@ -121,9 +121,7 @@ STATICFILES_FINDERS = [
 
 STATIC_URL = 'static/'
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'static_files')
+STATIC_ROOT = BASE_DIR / 'static_files'
 
 # Default primary key field type
 
@@ -146,7 +144,7 @@ CHANNEL_LAYERS = {
 
 # Logging
 
-LOGGING_DIR = os.path.join(BASE_DIR, 'logs')
+LOGGING_DIR = BASE_DIR / 'logs'
 
 LOGGING = {
     'version': 1,
@@ -165,7 +163,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOGGING_DIR, 'logging.log'),
+            'filename': str(LOGGING_DIR / 'logging.log'),
             'formatter': 'verbose',
         },
     },
