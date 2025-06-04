@@ -9,12 +9,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(m31t)^@57%e%t439&0gb7%fgi!^m50*ctou(1w465q4u=y!ut'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'insecure-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
 
 LOGIN_URL = 'login'
 
@@ -71,13 +71,13 @@ WSGI_APPLICATION = 'WebSocketChatApp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'chatapp', 
-        'USER': 'chatapp',  
-        'PASSWORD': 'chatapppassword',  
-        'HOST': 'chatapp-db',  
-        'PORT': '3306',  
+        'NAME': os.getenv('MYSQL_DATABASE', 'chatapp'),
+        'USER': os.getenv('MYSQL_USER', 'chatapp'),
+        'PASSWORD': os.getenv('MYSQL_PASSWORD', 'chatapppassword'),
+        'HOST': os.getenv('MYSQL_HOST', 'chatapp-db'),
+        'PORT': os.getenv('MYSQL_PORT', '3306'),
         'OPTIONS': {
-            'unix_socket': '/var/run/mysqld/mysqld.sock',
+            'unix_socket': os.getenv('MYSQL_UNIX_SOCKET', '/var/run/mysqld/mysqld.sock'),
         },
     }
 }
@@ -137,10 +137,25 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [(
+                os.getenv("REDIS_HOST", "127.0.0.1"),
+                int(os.getenv("REDIS_PORT", 6379)),
+            )],
         },
     },
 }
+
+# Security hardening
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+X_FRAME_OPTIONS = 'DENY'
+SECURE_SSL_REDIRECT = os.getenv('DJANGO_SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes')
+SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0' if DEBUG else '3600'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+CSRF_TRUSTED_ORIGINS = [origin for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin]
 
 # Logging
 
