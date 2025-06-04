@@ -1,6 +1,7 @@
 from django.test import TestCase, RequestFactory
 from ChatApp.models import CustomUser, Conversation
 from ChatApp.forms import StartConversationForm, CustomUserCreationForm, CustomAuthenticationForm
+import pyotp
 
 
 class StartConversationFormTest(TestCase):
@@ -56,12 +57,23 @@ class CustomUserCreationFormTest(TestCase):
 
 class CustomAuthenticationFormTest(TestCase):
     def test_custom_authentication_form_valid(self):
-        user = CustomUser.objects.create_user(email="user@example.com", password="password")
-        data = {'username': 'user@example.com', 'password': 'password'}
+        secret = pyotp.random_base32()
+        user = CustomUser.objects.create_user(email="user@example.com", password="password", totp_secret=secret)
+        data = {
+            'username': 'user@example.com',
+            'password': 'password',
+            'otp_token': pyotp.TOTP(secret).now(),
+        }
         form = CustomAuthenticationForm(data=data)
         self.assertTrue(form.is_valid())
 
     def test_custom_authentication_form_invalid(self):
-        data = {'username': 'user@example.com', 'password': 'wrongpassword'}
+        secret = pyotp.random_base32()
+        CustomUser.objects.create_user(email="user@example.com", password="password", totp_secret=secret)
+        data = {
+            'username': 'user@example.com',
+            'password': 'password',
+            'otp_token': '000000',
+        }
         form = CustomAuthenticationForm(data=data)
         self.assertFalse(form.is_valid())

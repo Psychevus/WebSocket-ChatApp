@@ -8,6 +8,19 @@ The WebSocket Chat Application demonstrates real-time messaging using Django, Dj
 - Persistent conversation and message history
 - Rate limiting on HTTP views and WebSocket endpoints
 - Robust form validation and logging
+- Message sanitisation and length checks for extra security
+- WebSocket connections automatically use `wss://` when the site is served over HTTPS
+- Typing indicators show when participants are composing a message
+- Optional end-to-end encryption for 1-to-1 chats using X25519 key exchange
+- Group conversations secured at rest with BYOK-managed keys
+- Pluggable data-loss-prevention hooks scan outgoing messages
+- Per-room retention policies with legal hold and S3 export
+- Ephemeral messages that self-destruct after a short TTL
+- Two-factor authentication for account logins
+- Immutable audit logs streamed to Kafka for SIEM integration
+- Enterprise identity via SAML 2.0 and OpenID Connect
+- SCIM-based user provisioning
+- Role-based access control (Owner, Admin, Analyst)
 - Dockerised services for the application, MySQL database and Redis
 
 ## Quick Start
@@ -29,6 +42,16 @@ Use SQLite and the in-memory channel layer when executing tests:
 python manage.py test ChatApp.tests --settings=WebSocketChatApp.test_settings
 ```
 
+Periodically clear expired messages using:
+```bash
+python manage.py expunge_old_messages
+```
+
+Ephemeral messages are purged automatically via Celery beat. Start a worker with:
+```bash
+celery -A WebSocketChatApp worker -B
+```
+
 ## Deployment
 Update environment variables as required for your platform. The provided Docker configuration can be adapted for cloud container services.
 
@@ -45,6 +68,21 @@ MYSQL_USER=chatapp
 MYSQL_PASSWORD=<db password>
 MYSQL_HOST=chatapp-db
 REDIS_HOST=chatapp-redis
+MESSAGE_ENCRYPTION_KEY=<base64 key for BYOK>
+DLP_BEFORE_SEND_HOOK=ChatApp.dlp.default_dlp_callback
+NIGHTFALL_API_KEY=<optional Nightfall API key>
+ORG_RETENTION_DAYS=30
+WORKSPACE_RETENTION_DAYS=30
+EXPUNGE_S3_BUCKET=<optional S3 bucket for exports>
+CELERY_BROKER_URL=redis://chatapp-redis:6379/0
+EPHEMERAL_MESSAGE_TTL=30
+MESSAGE_MAX_LENGTH=500
+KAFKA_BROKER_URL=<optional Kafka broker for audit logs>
+SAML_CONFIG_PATH=<path to saml config json>
+OIDC_CLIENT_ID=<OIDC client id>
+OIDC_CLIENT_SECRET=<OIDC client secret>
+SCIM_BEARER_TOKEN=<token for SCIM auth>
+TOTP_ENFORCE=True
 ```
 Ensure HTTPS is enabled and cookies are transmitted securely.
 

@@ -39,3 +39,29 @@ class ChatConsumerTestCase(TransactionTestCase):
                 content='hello'
             ).exists()
         )
+
+    def test_typing_indicator_broadcast(self):
+        user1 = CustomUser.objects.create_user(email="tuser1@example.com", password="pass")
+        user2 = CustomUser.objects.create_user(email="tuser2@example.com", password="pass")
+        conversation = Conversation.objects.create(user1=user1, user2=user2)
+
+        async def inner():
+            communicator1 = WebsocketCommunicator(application, f"ws/chat/{conversation.id}/")
+            communicator1.scope['user'] = user1
+            communicator2 = WebsocketCommunicator(application, f"ws/chat/{conversation.id}/")
+            communicator2.scope['user'] = user2
+
+            connected, _ = await communicator1.connect()
+            assert connected
+            connected, _ = await communicator2.connect()
+            assert connected
+
+            await communicator1.send_json_to({'type': 'typing'})
+            response = await communicator2.receive_json_from()
+            assert response['type'] == 'typing'
+            assert response['sender_email'] == user1.email
+
+            await communicator1.disconnect()
+            await communicator2.disconnect()
+
+        async_to_sync(inner)()

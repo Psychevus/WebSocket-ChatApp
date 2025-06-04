@@ -5,6 +5,8 @@ from datetime import datetime
 import redis
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login as auth_login
+from django.urls import reverse, NoReverseMatch
 from django.contrib.postgres.search import SearchVector
 from django.db.models import Q
 from django.db.models.functions import Length
@@ -15,7 +17,7 @@ from django_ratelimit.decorators import ratelimit
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
 
 from .forms import StartConversationForm
-from .models import Conversation, CustomUser
+from .models import Conversation, CustomUser, AuditLog
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +30,11 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
-            logger.info(f"User '{user.email}' registered successfully.")
-            return redirect('chat:conversations_list')
+            import pyotp
+            user.totp_secret = pyotp.random_base32()
+            user.save(update_fields=['totp_secret'])
+            logger.info(f"User '{user.email}' registered successfully with 2FA secret.")
+            return render(request, 'users/authentication/2fa_setup.html', {'secret': user.totp_secret})
         else:
             logger.error("Form submission is not valid. Errors:")
             for field, errors in form.errors.items():
@@ -50,7 +54,7 @@ def user_login(request):
         form = CustomAuthenticationForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
+            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             logger.info(f"User '{user.email}' logged in successfully.")
             return redirect('chat:conversations_list')
         else:
@@ -62,7 +66,21 @@ def user_login(request):
     else:
         form = CustomAuthenticationForm()
 
-    return render(request, 'users/authentication/login.html', {'form': form})
+    oidc_url = saml_url = None
+    try:
+        oidc_url = reverse('socialaccount_login', args=['openid_connect'])
+    except NoReverseMatch:
+        pass
+    try:
+        saml_url = reverse('saml2_login')
+    except NoReverseMatch:
+        pass
+
+    return render(
+        request,
+        'users/authentication/login.html',
+        {'form': form, 'oidc_login_url': oidc_url, 'saml_login_url': saml_url},
+    )
 
 
 # ---------------------------- Logout ----------------------------
@@ -192,3 +210,20 @@ def search_users(request):
         return JsonResponse([], safe=False)
     except Exception as e:
         return JsonResponse({'error': 'An error occurred while processing the request'}, status=500)
+
+
+@login_required
+def audit_logs_view(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden()
+    logs = AuditLog.objects.all()[:100]
+    data = [
+        {
+            'timestamp': log.timestamp.isoformat(),
+            'user': log.user.email if log.user else None,
+            'action': log.action,
+            'details': log.details,
+        }
+        for log in logs
+    ]
+    return JsonResponse(data, safe=False)

@@ -30,6 +30,7 @@
                     </li>
                 {% endfor %}
             </ul>
+            <div id="typing-indicator" class="text-sm text-gray-500 mt-2" style="display:none"></div>
         </div>
 
         <!-- Message input and send button -->
@@ -52,5 +53,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js" integrity="sha512-BLchc1Ir9RJjf0YVLva60EOwVYxTozRXn2A3I0GpF4ehvmhxMMbl8Rh/N6kicPPeiwSTvG4V6wXfXgjxr4gkew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/1.0.2/nacl-util.min.js" integrity="sha512-UVlt0isrxowJ7ZRXGG5pRyYDTLyg6pY70dNDO7xjMnIKh4j/wcgUp3NEPoPFcAckU4iigFsMghvYDn8Apux1Ew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="{% static 'chat/js/chat.js' %}"></script>
 {% endblock %}

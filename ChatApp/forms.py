@@ -80,5 +80,19 @@ class CustomAuthenticationForm(AuthenticationForm):
         }
     )
 
+    otp_token = forms.CharField(required=False, label='2FA Code')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = self.get_user()
+        from django.conf import settings
+        if user and user.totp_secret and settings.TOTP_ENFORCE:
+            import pyotp
+            token = cleaned_data.get('otp_token')
+            totp = pyotp.TOTP(user.totp_secret)
+            if not token or not totp.verify(token):
+                raise forms.ValidationError('Invalid two-factor authentication code.')
+        return cleaned_data
+
     class Meta:
-        fields = ['email', 'password']
+        fields = ['email', 'password', 'otp_token']
