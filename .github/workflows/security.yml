@@ -23,7 +23,7 @@ jobs:
       - name: Bandit Scan
         run: bandit -r ChatApp WebSocketChatApp -f json -o bandit-report.json
       - name: Trivy File Scan
-        uses: aquasecurity/trivy-action@v0.17.0
+        uses: aquasecurity/trivy-action@0.31.0
         with:
           scan-type: fs
           ignore-unfixed: true
