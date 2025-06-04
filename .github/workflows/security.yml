@@ -30,7 +30,7 @@ jobs:
           exit-code: 1
           output: trivy-report.txt
       - name: Generate SBOM
-        run: cyclonedx-py -o sbom.xml
+        run: cyclonedx-py requirements -o sbom.xml requirements.txt
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
