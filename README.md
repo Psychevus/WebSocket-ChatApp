@@ -40,6 +40,24 @@ docker-compose exec chatapp-django python manage.py test ChatApp.tests --setting
 ## Deployment
 Adjust environment variables to suit your production environment and deploy using your preferred platform. The provided Docker configuration can be adapted for cloud container services.
 
+## Security Configuration
+Sensitive settings such as `SECRET_KEY`, database credentials and allowed hosts are now read from environment variables. Set the following variables in production:
+
+```
+DJANGO_SECRET_KEY=<your secret key>
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=example.com,www.example.com
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SECURE_HSTS_SECONDS=3600
+MYSQL_DATABASE=chatapp
+MYSQL_USER=chatapp
+MYSQL_PASSWORD=<db password>
+MYSQL_HOST=chatapp-db
+REDIS_HOST=chatapp-redis
+```
+
+Ensure HTTPS is enabled and cookies are transmitted securely to mitigate common OWASP Top 10 issues.
+
 ## Contributing
 We welcome contributions! Please open pull requests against the `work` branch and ensure the test suite passes.
 
