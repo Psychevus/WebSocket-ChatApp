@@ -7,3 +7,4 @@ celery>=5.3,<6
 django-allauth
 djangosaml2~=1.7.0
 django-scim2
+PyJWT~=2.8.0
