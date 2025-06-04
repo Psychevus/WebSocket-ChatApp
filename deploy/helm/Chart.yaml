@@ -1,0 +1,6 @@
+apiVersion: v2
+name: chatapp
+version: 0.1.0
+description: WebSocket Chat Application
+appVersion: "1.0"
+type: application

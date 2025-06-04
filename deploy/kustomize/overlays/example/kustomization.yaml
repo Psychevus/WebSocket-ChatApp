@@ -1,0 +1,11 @@
+bases:
+  - ../../base
+helmCharts:
+  - name: chatapp
+    path: ../../../helm
+    releaseName: chatapp
+    valuesInline:
+      image:
+        tag: v1.0
+      service:
+        type: LoadBalancer
