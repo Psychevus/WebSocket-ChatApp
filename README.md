@@ -107,6 +107,10 @@ TOTP_ENFORCE=True
 ```
 Ensure HTTPS is enabled and cookies are transmitted securely.
 
+## Entra ID SAML + SCIM Setup
+
+For a walk-through of enabling single sign-on with Microsoft Entra ID and configuring automatic user and group provisioning, see [docs/entra-id-sso-scim.md](docs/entra-id-sso-scim.md).
+
 ## Contributing
 Contributions are welcome! Please open pull requests and ensure the test suite passes.
 
