@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'chatapp'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['chatapp-django:8001']

@@ -5,6 +5,7 @@ services:
     container_name: chatapp-django
     ports:
       - "8000:8000"
+      - "8001:8001"
     volumes:
       - .:/app
     depends_on:
@@ -13,6 +14,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: WebSocketChatApp.settings
       DEBUG: "True"
+      METRICS_PORT: "8001"
     healthcheck:
       test: [ "CMD", "python", "manage.py", "check" ]
       interval: 30s
@@ -39,5 +41,29 @@ services:
     ports:
       - "6379:6379"
 
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - chatapp-django
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+
 volumes:
   mysql_data:
+  grafana_data:
