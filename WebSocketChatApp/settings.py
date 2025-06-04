@@ -27,6 +27,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.openid_connect',
+    'djangosaml2',
+    'django_scim',
     'channels',
     'ChatApp',
 ]
@@ -38,6 +45,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -45,6 +53,7 @@ MIDDLEWARE = [
 RATELIMIT_USE_REQUEST_HEADER = True
 
 ROOT_URLCONF = 'WebSocketChatApp.urls'
+SITE_ID = 1
 
 TEMPLATES = [
     {
@@ -129,6 +138,37 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'ChatApp.CustomUser'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SAML_CONFIG_PATH = os.getenv('SAML_CONFIG_PATH')
+SAML_CONFIG = {}
+if SAML_CONFIG_PATH and os.path.exists(SAML_CONFIG_PATH):
+    import json
+    with open(SAML_CONFIG_PATH) as fh:
+        SAML_CONFIG = json.load(fh)
+
+SCIM_BEARER_TOKEN = os.getenv('SCIM_BEARER_TOKEN', 'changeme')
+
+SOCIALACCOUNT_PROVIDERS = {
+    'openid_connect': {
+        'SERVERS': {
+            'default': {
+                'CLIENT_ID': os.getenv('OIDC_CLIENT_ID'),
+                'CLIENT_SECRET': os.getenv('OIDC_CLIENT_SECRET'),
+                'SERVER_URL': os.getenv('OIDC_SERVER_URL', ''),
+            }
+        }
+    }
+}
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
 # Redis and Routing
 
 ASGI_APPLICATION = "WebSocketChatApp.routing.application"
@@ -156,6 +196,45 @@ SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0' if DEBUG e
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 CSRF_TRUSTED_ORIGINS = [origin for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin]
+
+# Maximum allowed characters in a chat message
+MESSAGE_MAX_LENGTH = int(os.getenv('MESSAGE_MAX_LENGTH', '500'))
+
+# Base64 encoded key used for BYOK encryption of group chats
+MESSAGE_ENCRYPTION_KEY = os.getenv('MESSAGE_ENCRYPTION_KEY')
+
+# Import path to a callable used for DLP checks before sending messages
+DLP_BEFORE_SEND_HOOK = os.getenv(
+    'DLP_BEFORE_SEND_HOOK', 'ChatApp.dlp.default_dlp_callback'
+)
+
+# Retention hierarchy defaults
+ORG_RETENTION_DAYS = int(os.getenv('ORG_RETENTION_DAYS', '30'))
+WORKSPACE_RETENTION_DAYS = int(os.getenv('WORKSPACE_RETENTION_DAYS', str(ORG_RETENTION_DAYS)))
+
+# S3 export settings
+EXPUNGE_S3_BUCKET = os.getenv('EXPUNGE_S3_BUCKET')
+AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
+
+# Default TTL (in seconds) for ephemeral messages
+EPHEMERAL_MESSAGE_TTL = int(os.getenv('EPHEMERAL_MESSAGE_TTL', '30'))
+
+# Enforce two-factor authentication during login
+TOTP_ENFORCE = os.getenv('TOTP_ENFORCE', 'True') == 'True'
+
+# Kafka broker for audit log streaming
+KAFKA_BROKER_URL = os.getenv('KAFKA_BROKER_URL')
+
+# Celery configuration
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f'redis://{os.getenv("REDIS_HOST", "127.0.0.1")}:6379/0')
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+from datetime import timedelta
+CELERY_BEAT_SCHEDULE = {
+    'purge_expired_messages': {
+        'task': 'ChatApp.tasks.purge_expired_messages',
+        'schedule': timedelta(seconds=int(os.getenv('PURGE_EXPIRED_INTERVAL', '60'))),
+    },
+}
 
 # Logging
 

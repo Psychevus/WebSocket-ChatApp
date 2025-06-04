@@ -19,6 +19,19 @@ class CustomUserModelTestCase(TestCase):
         self.assertTrue(self.user.is_active)
         self.assertFalse(self.user.is_staff)
 
+    def test_default_role(self):
+        self.assertEqual(self.user.role, "analyst")
+
+    def test_custom_role(self):
+        owner = CustomUser.objects.create_user(
+            email="owner@example.com",
+            password="ownerpass",
+            first_name="Owner",
+            last_name="User",
+            role="owner",
+        )
+        self.assertEqual(owner.role, "owner")
+
 
 class ConversationModelTestCase(TestCase):
     def setUp(self):

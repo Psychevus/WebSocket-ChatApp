@@ -25,9 +25,24 @@
                                        class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                        placeholder="Enter your password">
                             </div>
+                            <div class="mb-4">
+                                <label for="id_otp_token"
+                                       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">2FA Code</label>
+                                <input type="text" name="otp_token" id="id_otp_token"
+                                       class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                       placeholder="123456">
+                            </div>
                             <button type="submit" class="w-full  py-2 px-4 button-golden mt-4">
                                 Log in
                             </button>
+                            <div class="mt-2 text-center space-x-4">
+                                {% if oidc_login_url %}
+                                    <a href="{{ oidc_login_url }}" class="underline text-sm">OIDC Login</a>
+                                {% endif %}
+                                {% if saml_login_url %}
+                                    <a href="{{ saml_login_url }}" class="underline text-sm">SAML Login</a>
+                                {% endif %}
+                            </div>
                             {% if form.errors %}
                                 <div class="alert alert-danger">
                                     <ul>

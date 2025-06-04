@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Two-Factor Setup{% endblock %}
+{% block content %}
+<div class="container mx-auto p-8">
+  <h1 class="text-2xl mb-4">Two-Factor Authentication</h1>
+  <p class="mb-2">Scan this secret with your authenticator app:</p>
+  <p class="font-mono break-all">{{ secret }}</p>
+  <p class="mt-4"><a href="{% url 'chat:login' %}" class="underline">Continue to login</a></p>
+</div>
+{% endblock %}

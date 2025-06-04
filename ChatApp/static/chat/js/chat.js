@@ -1,14 +1,49 @@
 // Function to handle WebSocket connection setup
 function setupWebSocket(conversationId, currentUser, emailUser) {
-    const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${conversationId}/`);
+    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const chatSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/chat/${conversationId}/`);
+    let keyPair = null;
+    let sharedSecret = null;
 
     chatSocket.addEventListener('error', (e) => {
         console.error('WebSocket error:', e);
     });
 
+    chatSocket.addEventListener('open', () => {
+        if (window.nacl) {
+            keyPair = nacl.box.keyPair();
+            chatSocket.send(JSON.stringify({type: 'public_key', key: nacl.util.encodeBase64(keyPair.publicKey)}));
+        }
+    });
+
     chatSocket.addEventListener('message', (e) => {
-        const message = JSON.parse(e.data);
-        renderMessage(message, currentUser);
+        const data = JSON.parse(e.data);
+        if (data.type === 'typing') {
+            showTypingIndicator(data.sender_email);
+            return;
+        }
+
+        if (data.type === 'public_key' && keyPair) {
+            if (data.sender_id !== currentUser) {
+                const otherKey = nacl.util.decodeBase64(data.key);
+                sharedSecret = nacl.box.before(otherKey, keyPair.secretKey);
+            }
+            return;
+        }
+
+        if (data.nonce && data.message && sharedSecret) {
+            const nonce = nacl.util.decodeBase64(data.nonce);
+            const ciphertext = nacl.util.decodeBase64(data.message);
+            const decrypted = nacl.box.open.after(ciphertext, nonce, sharedSecret);
+            if (decrypted) {
+                data.message = nacl.util.encodeUTF8(decrypted);
+            } else {
+                console.error('Failed to decrypt message');
+                return;
+            }
+        }
+
+        renderMessage(data, currentUser);
     });
 
     // Handle sending messages on form submission
@@ -18,14 +53,35 @@ function setupWebSocket(conversationId, currentUser, emailUser) {
         const messageInputDom = document.querySelector('#message-input');
         const message = messageInputDom.value;
 
-        chatSocket.send(JSON.stringify({
-            message,
-            sender_id: currentUser,
-            sender_email: emailUser,
-        }));
+        if (sharedSecret) {
+            const nonce = nacl.randomBytes(nacl.box.nonceLength);
+            const ciphertext = nacl.box.after(nacl.util.decodeUTF8(message), nonce, sharedSecret);
+            chatSocket.send(JSON.stringify({
+                nonce: nacl.util.encodeBase64(nonce),
+                message: nacl.util.encodeBase64(ciphertext),
+                sender_id: currentUser,
+                sender_email: emailUser,
+            }));
+        } else {
+            chatSocket.send(JSON.stringify({
+                message,
+                sender_id: currentUser,
+                sender_email: emailUser,
+            }));
+        }
 
         messageInputDom.value = '';
         messageInputDom.focus();
+    });
+
+    const messageInput = document.querySelector('#message-input');
+    let typingTimeout;
+    messageInput.addEventListener('input', () => {
+        chatSocket.send(JSON.stringify({ type: 'typing' }));
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            chatSocket.send(JSON.stringify({ type: 'typing' }));
+        }, 1000);
     });
 
     // Scroll to the bottom when the page is loaded
@@ -50,17 +106,44 @@ function renderMessage(message, currentUser) {
     const messageBubble = document.createElement('div');
     messageBubble.classList.add('message-bubble');
     messageBubble.classList.add('shadow-xl');
-    messageBubble.innerHTML = message.message;
+    messageBubble.textContent = message.message;
 
     const timestamp = document.createElement('div');
     timestamp.classList.add('timestamp');
     timestamp.innerHTML = formatTimestamp(message.timestamp);
+
+    if (message.expires_at) {
+        const chip = document.createElement('span');
+        chip.classList.add('expiry-chip');
+        messageBubble.appendChild(chip);
+        const end = new Date(message.expires_at);
+        const interval = setInterval(() => {
+            const remaining = Math.floor((end - Date.now()) / 1000);
+            if (remaining <= 0) {
+                messageElement.remove();
+                clearInterval(interval);
+                return;
+            }
+            chip.textContent = `${remaining}s`;
+        }, 1000);
+    }
 
     messageBubble.appendChild(timestamp);
     messageContainer.appendChild(messageBubble);
     messageElement.appendChild(messageContainer);
     chatMessages.appendChild(messageElement);
     chatMessages.scrollIntoView({behavior: 'smooth', block: 'end'});
+}
+
+function showTypingIndicator(senderEmail) {
+    const typingElement = document.getElementById('typing-indicator');
+    if (!typingElement) return;
+    typingElement.textContent = `${senderEmail} is typing...`;
+    typingElement.style.display = 'block';
+    clearTimeout(typingElement._timeout);
+    typingElement._timeout = setTimeout(() => {
+        typingElement.style.display = 'none';
+    }, 1000);
 }
 
 // Function to format the timestamp

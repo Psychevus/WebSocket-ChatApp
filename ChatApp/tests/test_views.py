@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
 from ChatApp.models import Conversation
+import pyotp
 
 CustomUser = get_user_model()
 
@@ -10,13 +11,17 @@ CustomUser = get_user_model()
 class ChatViewsTestCase(TestCase):
     def setUp(self):
         self.client = Client()
+        secret1 = pyotp.random_base32()
+        secret2 = pyotp.random_base32()
         self.user1 = CustomUser.objects.create_user(
             email="user1@example.com",
             password="user1password",
+            totp_secret=secret1,
         )
         self.user2 = CustomUser.objects.create_user(
             email="user2@example.com",
             password="user2password",
+            totp_secret=secret2,
         )
         self.conversation = Conversation.objects.create(user1=self.user1, user2=self.user2)
         self.client.login(username="user1@example.com", password="user1password")
@@ -33,7 +38,8 @@ class ChatViewsTestCase(TestCase):
             'last_name': 'User',
         }
         response = self.client.post(reverse('chat:register'), data)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Two-Factor Authentication', response.content.decode())
         self.assertEqual(CustomUser.objects.filter(email='newuser@example.com').count(), 1)
 
     def test_user_login_view(self):
@@ -43,6 +49,7 @@ class ChatViewsTestCase(TestCase):
         data = {
             'username': 'user1@example.com',
             'password': 'user1password',
+            'otp_token': pyotp.TOTP(self.user1.totp_secret).now(),
         }
         response = self.client.post(reverse('chat:login'), data)
         self.assertEqual(response.status_code, 302)

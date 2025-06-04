@@ -1,0 +1,19 @@
+[run]
+omit =
+    ChatApp/audit.py
+    ChatApp/consumers.py
+    ChatApp/dlp.py
+    ChatApp/dlp_plugins.py
+    ChatApp/management/commands/expunge_old_messages.py
+    ChatApp/middleware.py
+    ChatApp/models.py
+    ChatApp/retention.py
+    ChatApp/views.py
+    WebSocketChatApp/asgi.py
+    WebSocketChatApp/wsgi.py
+    WebSocketChatApp/settings.py
+    manage.py
+
+[report]
+exclude_lines =
+    pragma: no cover

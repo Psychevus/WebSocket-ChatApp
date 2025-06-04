@@ -47,3 +47,12 @@
     text-align: right;
     color: #FFFFFF;
 }
+
+.expiry-chip {
+    font-size: 10px;
+    background-color: rgba(0,0,0,0.5);
+    color: #fff;
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
