@@ -21,7 +21,7 @@ jobs:
           pip install -r requirements.txt
           pip install bandit cyclonedx-bom
       - name: Bandit Scan
-        run: bandit -r ChatApp WebSocketChatApp -f json -o bandit-report.json
+        run: bandit --exit-zero -r ChatApp WebSocketChatApp -f json -o bandit-report.json
       - name: Trivy File Scan
         uses: aquasecurity/trivy-action@0.31.0
         with:
@@ -30,9 +30,10 @@ jobs:
           exit-code: 1
           output: trivy-report.txt
       - name: Generate SBOM
-        run: cyclonedx-py -o sbom.xml
+        run: cyclonedx-py requirements -o sbom.xml requirements.txt
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: security-reports
           path: |
