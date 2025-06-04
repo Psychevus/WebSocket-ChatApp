@@ -203,6 +203,9 @@ MESSAGE_MAX_LENGTH = int(os.getenv('MESSAGE_MAX_LENGTH', '500'))
 # Base64 encoded key used for BYOK encryption of group chats
 MESSAGE_ENCRYPTION_KEY = os.getenv('MESSAGE_ENCRYPTION_KEY')
 
+# AWS KMS CMK used to envelope-encrypt tenant keys (Slack EKM pattern)
+KMS_KEY_ID = os.getenv('KMS_KEY_ID')
+
 # Import path to a callable used for DLP checks before sending messages
 DLP_BEFORE_SEND_HOOK = os.getenv(
     'DLP_BEFORE_SEND_HOOK', 'ChatApp.dlp.default_dlp_callback'

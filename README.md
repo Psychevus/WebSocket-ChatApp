@@ -11,8 +11,10 @@ The WebSocket Chat Application demonstrates real-time messaging using Django, Dj
 - Message sanitisation and length checks for extra security
 - WebSocket connections automatically use `wss://` when the site is served over HTTPS
 - Typing indicators show when participants are composing a message
-- Optional end-to-end encryption for 1-to-1 chats using X25519 key exchange
-- Group conversations secured at rest with BYOK-managed keys
+- End-to-end encryption for 1-to-1 chats uses the double-ratchet algorithm with
+  an X25519 handshake. Messages are encrypted client-side before being sent.
+- Group conversations are encrypted at rest with BYOK-managed keys. Tenant keys
+  are stored in AWS KMS following a pattern similar to Slack EKM.
 - Pluggable data-loss-prevention hooks scan outgoing messages
 - Per-room retention policies with legal hold and S3 export
 - Ephemeral messages that self-destruct after a short TTL
@@ -90,6 +92,7 @@ MYSQL_PASSWORD=<db password>
 MYSQL_HOST=chatapp-db
 REDIS_HOST=chatapp-redis
 MESSAGE_ENCRYPTION_KEY=<base64 key for BYOK>
+KMS_KEY_ID=<AWS KMS key ID for BYOK/EKM>
 DLP_BEFORE_SEND_HOOK=ChatApp.dlp.default_dlp_callback
 NIGHTFALL_API_KEY=<optional Nightfall API key>
 ORG_RETENTION_DAYS=30
