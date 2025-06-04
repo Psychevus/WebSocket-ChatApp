@@ -32,7 +32,8 @@ jobs:
       - name: Generate SBOM
         run: cyclonedx-py -o sbom.xml
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: security-reports
           path: |
