@@ -1,0 +1,27 @@
+image:
+  repository: modrix/chatapp-django-image
+  tag: v1.0
+  pullPolicy: IfNotPresent
+
+mysql:
+  image: mysql:5.7
+  database: chatapp
+  user: chatapp
+  password: prodpassword
+  rootPassword: prodrootpassword
+
+redis:
+  image: redis:6.2
+
+service:
+  type: LoadBalancer
+  port: 8000
+
+saml:
+  configPath: ""
+
+scim:
+  bearerToken: prodtoken
+
+encryption:
+  key: prodkey

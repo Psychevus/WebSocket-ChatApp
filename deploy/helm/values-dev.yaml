@@ -1,0 +1,27 @@
+image:
+  repository: modrix/chatapp-django-image
+  tag: dev
+  pullPolicy: IfNotPresent
+
+mysql:
+  image: mysql:5.7
+  database: chatapp_dev
+  user: chatapp_dev
+  password: devpassword
+  rootPassword: devrootpassword
+
+redis:
+  image: redis:6.2
+
+service:
+  type: NodePort
+  port: 8000
+
+saml:
+  configPath: ""
+
+scim:
+  bearerToken: devtoken
+
+encryption:
+  key: devkey
