@@ -45,6 +45,13 @@ Prometheus will expose metrics on `http://localhost:9090` and Grafana will be av
 ## Telemetry
 Metrics are exported using OpenTelemetry and Prometheus. Grafana Live can be used to visualise latency in real time. The Prometheus scrape endpoint is exposed on port `8001` from the Django container.
 
+Tracing is also enabled. Run the app with:
+```bash
+OTEL_PYTHON_TRACER_PROVIDER=WebSocketChatApp.console_tracer_provider:tracer_provider \
+opentelemetry-instrument python manage.py runserver --settings=WebSocketChatApp.test_settings
+```
+Traces will be printed to STDOUT showing spans for WebSocket connect, receive and database writes.
+
 ## Running Tests
 Use SQLite and the in-memory channel layer when executing tests:
 ```bash
