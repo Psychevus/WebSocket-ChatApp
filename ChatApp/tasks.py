@@ -3,6 +3,20 @@ from django.utils import timezone
 
 import logging
 from django.conf import settings
+
+import collections
+from collections import abc as collections_abc
+
+for name in (
+    "MutableSet",
+    "MutableMapping",
+    "MutableSequence",
+    "Mapping",
+    "Iterable",
+):
+    if not hasattr(collections, name):
+        setattr(collections, name, getattr(collections_abc, name))
+
 from ChatApp.models import Message
 from pyfcm import FCMNotification
 from apns2.client import APNsClient
