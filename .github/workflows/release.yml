@@ -1,0 +1,36 @@
+name: Release Version Check
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  verify-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Extract code version
+        id: code
+        run: |
+          if [ -f pyproject.toml ]; then
+            ver=$(grep -Po '(?<=^version = ")([^"\n]+)' pyproject.toml)
+          elif [ -f setup.cfg ]; then
+            ver=$(grep -Po '(?<=^version = )([^\n]+)' setup.cfg)
+          else
+            echo "No pyproject.toml or setup.cfg found" >&2
+            exit 1
+          fi
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+      - name: Extract changelog version
+        id: changelog
+        run: |
+          cl_ver=$(grep -Pom1 '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | grep -Po '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=$cl_ver" >> "$GITHUB_OUTPUT"
+      - name: Compare versions
+        run: |
+          echo "Code version: ${{ steps.code.outputs.version }}"
+          echo "Changelog version: ${{ steps.changelog.outputs.version }}"
+          if [ "${{ steps.code.outputs.version }}" != "${{ steps.changelog.outputs.version }}" ]; then
+            echo "Version mismatch between code and CHANGELOG." >&2
+            exit 1
+          fi
