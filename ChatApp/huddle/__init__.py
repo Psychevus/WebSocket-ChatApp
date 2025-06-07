@@ -1,0 +1,1 @@
+"""Simple huddle room management"""

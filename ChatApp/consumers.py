@@ -312,3 +312,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except asyncio.CancelledError:
             pass
 
+
+from .huddle.rooms import create_room
+
+
+class HuddleConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        if not self.scope.get("user") or not self.scope["user"].is_authenticated:
+            await self.close()
+            return
+        await self.accept()
+
+    async def receive(self, text_data: str):
+        data = json.loads(text_data)
+        if data.get("action") == "start_huddle":
+            room = create_room()
+            await self.send(text_data=json.dumps({
+                "type": "huddle_started",
+                "roomId": room.id,
+                "routerRtpCapabilities": room.router_rtp_capabilities,
+            }))
