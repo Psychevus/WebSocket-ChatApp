@@ -17,7 +17,8 @@ for name in (
     if not hasattr(collections, name):
         setattr(collections, name, getattr(collections_abc, name))
 
-from ChatApp.models import Message
+from ChatApp.models import Message, CustomUser, MessageReceipt, Conversation
+from django.db.models import Q
 from pyfcm import FCMNotification
 from apns2.client import APNsClient
 from apns2.payload import Payload
@@ -57,3 +58,20 @@ def send_push(title: str, body: str, tokens: list):
                 client.send_notification(token, payload, settings.APNS_TOPIC)
         except Exception as e:
             logger.error(f"APNS error: {e}")
+
+@shared_task
+def erase_user_data(user_id: int):
+    """Delete a user's personal data."""
+    try:
+        user = CustomUser.objects.get(pk=user_id)
+    except CustomUser.DoesNotExist:
+        return
+
+    MessageReceipt.objects.filter(user=user).delete()
+    messages = Message.objects.filter(
+        Q(sender=user) | Q(conversation__user1=user) | Q(conversation__user2=user)
+    )
+    messages.delete()
+    Conversation.objects.filter(Q(user1=user) | Q(user2=user)).delete()
+    user.delete()
+
