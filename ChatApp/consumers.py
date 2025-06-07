@@ -12,6 +12,7 @@ from opentelemetry import trace
 
 from django.conf import settings
 from .models import Conversation, Message
+from .models import MessageReceipt
 from .dlp import run_dlp_hook
 from WebSocketChatApp.telemetry import record_websocket_latency
 
@@ -45,6 +46,16 @@ def unregister_conversation(cid: str):
         redis_client.srem("active_conversations", cid)
     except Exception:
         pass
+
+
+@database_sync_to_async
+def update_last_seen(user_id: int, conversation_id: int, message_id: int):
+    receipt, _ = MessageReceipt.objects.get_or_create(
+        user_id=user_id, conversation_id=conversation_id
+    )
+    if message_id > receipt.last_seen_id:
+        receipt.last_seen_id = message_id
+        receipt.save(update_fields=["last_seen_id", "updated_at"])
 
 
 def check_rate_limit(rate, method='RATELIMIT_KEY'):
@@ -105,6 +116,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await register_conversation(str(self.conversation_id))
 
         await self.accept()
+        self.last_activity = timezone.now()
+        self.presence_task = asyncio.create_task(self.presence_loop())
         logger.info(
             f"User {self.scope['user']} connected to conversation {self.conversation_id}"
         )
@@ -115,11 +128,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
         await unregister_conversation(str(self.conversation_id))
+        if hasattr(self, "presence_task"):
+            self.presence_task.cancel()
         logger.info(f"User {self.scope['user']} disconnected from conversation {self.conversation_id}")
 
     @check_rate_limit(rate=1)
     async def receive(self, text_data: str):
         with tracer.start_as_current_span("receive"):
+            self.last_activity = timezone.now()
             data = json.loads(text_data)
 
             if data.get('type') == 'typing':
@@ -176,23 +192,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.send_json({"message": "Message blocked by DLP policy."})
                 return
 
-            await self.channel_layer.group_send(
-                self.conversation_group_name,
-                {
-                    'type': 'chat.message',
-                    'message': message_content,
-                    'nonce': nonce,
-                    'sender_id': sender.id if sender else None,
-                    'sender_email': sender.email if sender else None,
-                    'timestamp': timestamp.isoformat(),
-                    'expires_at': expires_at.isoformat() if expires_at else None,
-                }
-            )
-
             try:
                 with tracer.start_as_current_span("db_write"):
                     conversation_key = f"conversation_{self.conversation_id}"
+                    conversation = await database_sync_to_async(Conversation.objects.get)(pk=self.conversation_id)
+                    msg = await database_sync_to_async(Message.objects.create)(
+                        conversation=conversation,
+                        sender=sender,
+                        content=message_content,
+                        timestamp=timestamp,
+                        expires_at=expires_at,
+                    )
+
                     message_data = {
+                        'id': msg.id,
                         'message': message_content,
                         'nonce': nonce,
                         'sender_id': sender.id if sender else None,
@@ -206,14 +219,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     with redis.StrictRedis(host="localhost", port=6379, db=0) as redis_client:
                         redis_client.lpush(conversation_key, message_json)
 
-                    conversation = await database_sync_to_async(Conversation.objects.get)(pk=self.conversation_id)
-                    await database_sync_to_async(Message.objects.create)(
-                        conversation=conversation,
-                        sender=sender,
-                        content=message_content,
-                        timestamp=timestamp,
-                        expires_at=expires_at,
-                    )
+                await update_last_seen(sender.id, self.conversation_id, msg.id)
+
+                await self.channel_layer.group_send(
+                    self.conversation_group_name,
+                    {
+                        'type': 'chat.message',
+                        'message': message_content,
+                        'nonce': nonce,
+                        'sender_id': sender.id if sender else None,
+                        'sender_email': sender.email if sender else None,
+                        'timestamp': timestamp.isoformat(),
+                        'expires_at': expires_at.isoformat() if expires_at else None,
+                        'message_id': msg.id,
+                    }
+                )
 
             except (redis.ConnectionError, Exception) as e:
                 logger.error(f"An error occurred while storing the message in Redis or DB: {str(e)}")
@@ -224,6 +244,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         start_time = timezone.datetime.fromisoformat(event["timestamp"])
         latency_ms = (timezone.now() - start_time).total_seconds() * 1000
         record_websocket_latency(latency_ms)
+
+        if event.get("message_id"):
+            await update_last_seen(self.scope["user"].id, self.conversation_id, event["message_id"])
 
         await self.send(text_data=json.dumps({
             "message": message,
@@ -251,4 +274,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_pre_stop(self, event):
         await self.close(code=1001)
+
+    async def chat_presence_update(self, event):
+        await self.send_json({"type": "presence_update", "user_id": event.get("user_id")})
+
+    async def presence_loop(self):
+        try:
+            while True:
+                await asyncio.sleep(15)
+                if (timezone.now() - self.last_activity).total_seconds() > 45:
+                    await self.close()
+                    break
+                await self.channel_layer.group_send(
+                    self.conversation_group_name,
+                    {"type": "chat.presence_update", "user_id": self.scope["user"].id},
+                )
+        except asyncio.CancelledError:
+            pass
 
