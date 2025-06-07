@@ -99,6 +99,16 @@ Example overlays are located in `deploy/kustomize/overlays/`. Build the base man
 kustomize build deploy/kustomize/overlays/example | kubectl apply -f -
 ```
 
+Blue/green deployment manifests are also available:
+
+```bash
+kustomize build deploy/kustomize/overlays/blue | kubectl apply -f -
+kustomize build deploy/kustomize/overlays/green | kubectl apply -f -
+```
+
+After verifying the green rollout, run `scripts/rollout_to_green.sh` to shift
+all traffic to the green service.
+
 Further guidance on horizontal scaling and enterprise deployment is available in [docs/scaling.md](docs/scaling.md).
 
 ## Security Configuration

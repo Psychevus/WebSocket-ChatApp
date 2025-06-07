@@ -1,0 +1,9 @@
+bases:
+  - ../../base
+helmCharts:
+  - name: chatapp
+    path: ../../../helm
+    releaseName: chatapp-green
+    valuesFile: ../../../helm/values.yaml
+patchesStrategicMerge:
+  - service-canary.yaml
