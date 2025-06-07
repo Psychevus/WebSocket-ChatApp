@@ -13,6 +13,7 @@ urlpatterns = [
     path('admin/audit-logs/', chat_views.audit_logs_view, name='audit_logs'),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
+    path('api/', include('ChatApp.api_urls')),
 ]
 
 # Gate enterprise features

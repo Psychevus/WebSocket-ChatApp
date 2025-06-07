@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django_scim',
     'channels',
     'csp',
+    'rest_framework',
     'ChatApp',
 ]
 

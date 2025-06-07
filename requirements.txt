@@ -22,3 +22,4 @@ requests~=2.31
 django-csp~=3.7
 daphne>=3,<4
 python-json-logger~=3.3
+djangorestframework~=3.14.0
