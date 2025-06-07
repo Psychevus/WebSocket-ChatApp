@@ -13,3 +13,7 @@ logs/logging.log
 # <django-project-name>/staticfiles/
 
 .coverage
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/

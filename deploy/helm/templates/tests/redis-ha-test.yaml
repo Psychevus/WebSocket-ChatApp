@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "chatapp.fullname" . }}-redis-ha-test
+  annotations:
+    "helm.sh/hook": test
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: redis
+        image: redis:6.2
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+            redis-cli -h {{ include "chatapp.fullname" . }}-redis set testkey ha
+            redis-cli -h {{ include "chatapp.fullname" . }}-redis-sentinel -p 26379 sentinel failover mymaster
+            sleep 5
+            redis-cli -h {{ include "chatapp.fullname" . }}-redis get testkey | grep ha

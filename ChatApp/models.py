@@ -78,6 +78,20 @@ class Message(models.Model):
         return f"Message from {self.sender} at {self.timestamp}"
 
 
+class MessageReceipt(models.Model):
+    """Tracks the latest message seen by a user in a conversation."""
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
+    last_seen_id = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("user", "conversation")
+
+    def __str__(self):
+        return f"{self.user} in {self.conversation_id}: {self.last_seen_id}"
+
+
 class AuditLog(models.Model):
     """Immutable record of important events."""
     timestamp = models.DateTimeField(auto_now_add=True)

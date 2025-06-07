@@ -1,0 +1,5 @@
+redis:
+  replica:
+    replicaCount: 2
+  sentinel:
+    enabled: true
