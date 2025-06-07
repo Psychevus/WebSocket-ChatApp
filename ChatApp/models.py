@@ -117,6 +117,15 @@ class AuditLog(models.Model):
         return f"{self.timestamp} {self.action}"
 
 
+class RetentionPolicy(models.Model):
+    scope = models.CharField(max_length=255, unique=True)
+    ttl_seconds = models.PositiveIntegerField()
+    override_until = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.scope}: {self.ttl_seconds}s"
+
+
 @receiver(post_save, sender=Message)
 def log_message_sent(sender, instance, created, **kwargs):
     if created:
