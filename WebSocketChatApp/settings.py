@@ -238,6 +238,12 @@ TOTP_ENFORCE = os.getenv('TOTP_ENFORCE', 'True') == 'True'
 # Kafka broker for audit log streaming
 KAFKA_BROKER_URL = os.getenv('KAFKA_BROKER_URL')
 
+# Push notification settings
+FCM_SERVER_KEY = os.getenv('FCM_SERVER_KEY')
+APNS_CERT_FILE = os.getenv('APNS_CERT_FILE')
+APNS_TOPIC = os.getenv('APNS_TOPIC')
+APNS_USE_SANDBOX = os.getenv('APNS_USE_SANDBOX', 'True').lower() in ('true', '1', 'yes')
+
 # Celery configuration
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f'redis://{os.getenv("REDIS_HOST", "127.0.0.1")}:6379/0')
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL

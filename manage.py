@@ -2,6 +2,19 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import collections
+from collections import abc as collections_abc
+
+if not hasattr(collections, "MutableSet"):
+    collections.MutableSet = collections_abc.MutableSet
+if not hasattr(collections, "MutableMapping"):
+    collections.MutableMapping = collections_abc.MutableMapping
+if not hasattr(collections, "MutableSequence"):
+    collections.MutableSequence = collections_abc.MutableSequence
+if not hasattr(collections, "Mapping"):
+    collections.Mapping = collections_abc.Mapping
+if not hasattr(collections, "Iterable"):
+    collections.Iterable = collections_abc.Iterable
 
 
 def main():
