@@ -20,7 +20,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-    command: ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+    command: ["sh", "-c", "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 WebSocketChatApp.asgi:application"]
 
   chatapp-db:
     image: mysql:5.7

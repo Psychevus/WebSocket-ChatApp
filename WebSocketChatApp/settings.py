@@ -35,12 +35,14 @@ INSTALLED_APPS = [
     'djangosaml2',
     'django_scim',
     'channels',
+    'csp',
     'ChatApp',
 ]
 
 MIDDLEWARE = [
     'django_ratelimit.middleware.RatelimitMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'csp.middleware.CSPMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -197,6 +199,12 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 CSRF_TRUSTED_ORIGINS = [origin for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin]
 
+# Content Security Policy
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'",)
+CSP_REPORT_ONLY = os.getenv('CSP_REPORT_ONLY', 'False').lower() in ('true', '1', 'yes')
+
 # Maximum allowed characters in a chat message
 MESSAGE_MAX_LENGTH = int(os.getenv('MESSAGE_MAX_LENGTH', '500'))
 
@@ -242,17 +250,18 @@ CELERY_BEAT_SCHEDULE = {
 # Logging
 
 LOGGING_DIR = BASE_DIR / 'logs'
+LOG_JSON = os.getenv('LOG_JSON', 'False').lower() in ('true', '1', 'yes')
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'fmt': '%(levelname)s %(asctime)s %(module)s %(message)s',
+        },
         'verbose': {
             'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
             'style': '{',
         },
     },
@@ -261,17 +270,21 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': str(LOGGING_DIR / 'logging.log'),
-            'formatter': 'verbose',
+            'formatter': 'json' if LOG_JSON else 'verbose',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'json' if LOG_JSON else 'verbose',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'ChatApp': {
-            'handlers': ['file'],
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': True,
         },

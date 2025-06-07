@@ -23,6 +23,9 @@ The WebSocket Chat Application demonstrates real-time messaging using Django, Dj
 - Immutable, SHA-chained audit logs streamed to Kafka for SIEM integration
 - Enterprise identity via SAML 2.0 and OpenID Connect
 - SCIM-based user provisioning
+- Content Security Policy enforcement via `django-csp`
+- Structured JSON logging for SIEM integration
+- Production-ready ASGI server powered by Daphne
 - Role-based access control (Owner, Admin, Analyst)
 - Dockerised services for the application, MySQL database and Redis
 - Real-time telemetry with OpenTelemetry, Prometheus and Grafana
@@ -38,7 +41,7 @@ cd WebSocket-ChatApp
 docker-compose build
 docker-compose up
 ```
-The application will be available at `http://localhost:8000`.
+The application will be available at `http://localhost:8000` and served by the Daphne ASGI server for optimal WebSocket performance.
 
 Prometheus will expose metrics on `http://localhost:9090` and Grafana will be available at `http://localhost:3000` (default credentials `admin`/`admin`).
 
@@ -50,7 +53,7 @@ Import `docs/grafana-dashboard.json` into Grafana to view a panel showing the P9
 Tracing is also enabled. Run the app with:
 ```bash
 OTEL_PYTHON_TRACER_PROVIDER=WebSocketChatApp.console_tracer_provider:tracer_provider \
-opentelemetry-instrument python manage.py runserver --settings=WebSocketChatApp.test_settings
+opentelemetry-instrument daphne -b 0.0.0.0 WebSocketChatApp.asgi:application
 ```
 Traces will be printed to STDOUT showing spans for WebSocket connect, receive and database writes.
 
@@ -94,6 +97,8 @@ Example overlays are located in `deploy/kustomize/overlays/`. Build the base man
 kustomize build deploy/kustomize/overlays/example | kubectl apply -f -
 ```
 
+Further guidance on horizontal scaling and enterprise deployment is available in [docs/scaling.md](docs/scaling.md).
+
 ## Security Configuration
 A checklist of common security considerations is available in [OWASP_SECURITY.md](OWASP_SECURITY.md). Sensitive settings are read from environment variables such as:
 ```
@@ -123,6 +128,8 @@ OIDC_CLIENT_ID=<OIDC client id>
 OIDC_CLIENT_SECRET=<OIDC client secret>
 SCIM_BEARER_TOKEN=<token for SCIM auth>
 TOTP_ENFORCE=True
+LOG_JSON=False  # set to True for structured logs
+CSP_REPORT_ONLY=False  # enable report-only mode for CSP
 ```
 Ensure HTTPS is enabled and cookies are transmitted securely.
 
