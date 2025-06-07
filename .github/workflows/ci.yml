@@ -52,10 +52,14 @@ jobs:
             exit 1
           fi
 
-      - name: Scan secrets with gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          args: detect --source . --no-git -v --report-format=json --report-path=gitleaks.json
+        - name: Install gitleaks
+          run: |
+            curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
+            tar -xzf gitleaks.tar.gz gitleaks
+            sudo mv gitleaks /usr/local/bin/
+
+        - name: Scan secrets with gitleaks
+          run: gitleaks detect --source . --no-git --report-format=json --report-path=gitleaks.json
 
       - name: Upload artifacts
         if: always()
