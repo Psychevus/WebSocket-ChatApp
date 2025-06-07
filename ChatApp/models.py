@@ -67,6 +67,7 @@ class Conversation(models.Model):
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    parent = models.ForeignKey("self", null=True, blank=True, related_name="children", on_delete=models.CASCADE)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True, help_text="When to permanently delete this message")
@@ -90,6 +91,33 @@ class MessageReceipt(models.Model):
 
     def __str__(self):
         return f"{self.user} in {self.conversation_id}: {self.last_seen_id}"
+
+
+class Reaction(models.Model):
+    emoji = models.CharField(max_length=10)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="reactions")
+
+    class Meta:
+        unique_together = ("emoji", "user", "message")
+
+    def __str__(self):
+        return f"{self.emoji} by {self.user} on {self.message_id}"
+
+
+class DeviceToken(models.Model):
+    PLATFORM_CHOICES = [
+        ("ios", "iOS"),
+        ("android", "Android"),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="device_tokens")
+    token = models.CharField(max_length=255, unique=True)
+    platform = models.CharField(max_length=10, choices=PLATFORM_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} {self.platform}"
 
 
 class AuditLog(models.Model):

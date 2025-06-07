@@ -11,8 +11,9 @@ from django.utils import timezone
 from opentelemetry import trace
 
 from django.conf import settings
-from .models import Conversation, Message
+from .models import Conversation, Message, DeviceToken
 from .models import MessageReceipt
+from .tasks import send_push
 from .dlp import run_dlp_hook
 from WebSocketChatApp.telemetry import record_websocket_latency
 
@@ -27,23 +28,26 @@ redis_client = redis.Redis(
 
 
 @database_sync_to_async
-def register_conversation(cid: str):
+def register_conversation(cid: str, user_id: int):
     try:
         backend = settings.CHANNEL_LAYERS["default"].get("BACKEND", "")
         if backend.endswith("InMemoryChannelLayer"):
             return
         redis_client.sadd("active_conversations", cid)
+        redis_client.sadd(f"active_conversation_users:{cid}", user_id)
     except Exception:
         pass
 
 
 @database_sync_to_async
-def unregister_conversation(cid: str):
+def unregister_conversation(cid: str, user_id: int):
     try:
         backend = settings.CHANNEL_LAYERS["default"].get("BACKEND", "")
         if backend.endswith("InMemoryChannelLayer"):
             return
-        redis_client.srem("active_conversations", cid)
+        redis_client.srem(f"active_conversation_users:{cid}", user_id)
+        if redis_client.scard(f"active_conversation_users:{cid}") == 0:
+            redis_client.srem("active_conversations", cid)
     except Exception:
         pass
 
@@ -56,6 +60,11 @@ def update_last_seen(user_id: int, conversation_id: int, message_id: int):
     if message_id > receipt.last_seen_id:
         receipt.last_seen_id = message_id
         receipt.save(update_fields=["last_seen_id", "updated_at"])
+
+
+@database_sync_to_async
+def get_device_tokens(user_id: int):
+    return list(DeviceToken.objects.filter(user_id=user_id).values("token", "platform"))
 
 
 def check_rate_limit(rate, method='RATELIMIT_KEY'):
@@ -113,7 +122,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        await register_conversation(str(self.conversation_id))
+        await register_conversation(str(self.conversation_id), self.scope['user'].id)
 
         await self.accept()
         self.last_activity = timezone.now()
@@ -127,7 +136,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.conversation_group_name,
             self.channel_name
         )
-        await unregister_conversation(str(self.conversation_id))
+        await unregister_conversation(str(self.conversation_id), self.scope['user'].id)
         if hasattr(self, "presence_task"):
             self.presence_task.cancel()
         logger.info(f"User {self.scope['user']} disconnected from conversation {self.conversation_id}")
@@ -234,6 +243,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'message_id': msg.id,
                     }
                 )
+
+                recipient = conversation.user2 if conversation.user1_id == sender.id else conversation.user1
+                offline = not redis_client.sismember(
+                    f"active_conversation_users:{self.conversation_id}", recipient.id
+                )
+                if offline:
+                    tokens = await get_device_tokens(recipient.id)
+                    if tokens:
+                        send_push.delay(
+                            f"New message from {sender.email}", message_content, tokens
+                        )
 
             except (redis.ConnectionError, Exception) as e:
                 logger.error(f"An error occurred while storing the message in Redis or DB: {str(e)}")

@@ -94,10 +94,13 @@ function setupWebSocket(conversationId, currentUser, emailUser) {
 }
 
 // Function to render a message in the chat
-function renderMessage(message, currentUser) {
-    const chatMessages = document.querySelector('#chat-messages');
+function renderMessage(message, currentUser, depth = 0, container) {
+    const chatMessages = container || document.querySelector('#chat-messages');
     const messageElement = document.createElement('li');
     messageElement.classList.add('flex', 'flex-row', message.sender_id === currentUser ? 'justify-end' : 'justify-start');
+    if (depth > 0) {
+        messageElement.style.marginLeft = `${depth * 20}px`;
+    }
 
     const messageContainer = document.createElement('div');
     const containerClass = message.sender_id === currentUser ? 'right' : 'left';
@@ -129,10 +132,28 @@ function renderMessage(message, currentUser) {
     }
 
     messageBubble.appendChild(timestamp);
+
+    if (message.reactions) {
+        const reactions = document.createElement('div');
+        Object.entries(message.reactions).forEach(([emoji, count]) => {
+            const span = document.createElement('span');
+            span.textContent = `${emoji} ${count}`;
+            span.style.marginRight = '4px';
+            reactions.appendChild(span);
+        });
+        if (reactions.childNodes.length) {
+            messageBubble.appendChild(reactions);
+        }
+    }
+
     messageContainer.appendChild(messageBubble);
     messageElement.appendChild(messageContainer);
     chatMessages.appendChild(messageElement);
     chatMessages.scrollIntoView({behavior: 'smooth', block: 'end'});
+
+    if (message.children) {
+        message.children.forEach(child => renderMessage(child, currentUser, depth + 1, chatMessages));
+    }
 }
 
 function showTypingIndicator(senderEmail) {
