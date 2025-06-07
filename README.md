@@ -1,5 +1,7 @@
 # WebSocket Chat Application
 
+[![Coverage](https://img.shields.io/badge/dynamic/xml?color=brightgreen&label=coverage&url=https://raw.githubusercontent.com/Psychevus/WebSocket-ChatApp/main/coverage.xml&query=//coverage/@line-rate&suffix=%25)](coverage.xml)
+
 ## Overview
 The WebSocket Chat Application demonstrates real-time messaging using Django, Django Channels and Redis. Conversations are stored in a relational database while Redis handles transient message queuing. Docker Compose orchestrates the services to provide a consistent environment with minimal setup.
 

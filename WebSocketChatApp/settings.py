@@ -153,6 +153,7 @@ if SAML_CONFIG_PATH and os.path.exists(SAML_CONFIG_PATH):
         SAML_CONFIG = json.load(fh)
 
 SCIM_BEARER_TOKEN = os.getenv('SCIM_BEARER_TOKEN', 'changeme')
+ENTERPRISE_LICENSE_KEY = os.getenv('ENTERPRISE_LICENSE_KEY', '')
 
 SOCIALACCOUNT_PROVIDERS = {
     'openid_connect': {

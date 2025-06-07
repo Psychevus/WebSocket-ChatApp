@@ -13,6 +13,7 @@ omit =
     WebSocketChatApp/wsgi.py
     WebSocketChatApp/settings.py
     manage.py
+    tests/*
 
 [report]
 exclude_lines =
