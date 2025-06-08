@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "chatapp.fullname" . }}-alerts
+  labels:
+    app: {{ include "chatapp.name" . }}
+    release: {{ .Release.Name }}
+spec:
+  groups:
+    - name: chatapp.rules
+      rules:
+        - alert: WebSocketConnectSuccessRateLow
+          expr: ws_connect_success_rate < 99.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "WebSocket connect success rate below 99.9%"
+            description: "WebSocket connection success rate has fallen below 99.9% for the last 5 minutes."
+        - alert: WebSocketLatencyHigh
+          expr: histogram_quantile(0.95, rate(ws_latency_bucket[5m])) > 0.2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High WebSocket latency"
+            description: "95th percentile WebSocket latency has exceeded 0.2s for the last 5 minutes."
