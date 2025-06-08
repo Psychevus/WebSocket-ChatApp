@@ -23,5 +23,6 @@ django-csp~=3.7
 daphne>=3,<4
 python-json-logger~=3.3
 djangorestframework~=3.14.0
+drf-spectacular~=0.27.0
 pyfcm~=2.0
 apns2~=0.7

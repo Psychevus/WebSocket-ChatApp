@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'channels',
     'csp',
     'rest_framework',
+    'drf_spectacular',
     'ChatApp',
 ]
 
@@ -57,6 +58,10 @@ RATELIMIT_USE_REQUEST_HEADER = True
 
 ROOT_URLCONF = 'WebSocketChatApp.urls'
 SITE_ID = 1
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
 
 TEMPLATES = [
     {
