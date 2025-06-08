@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "chatapp.fullname" . }}-ws-slo
+  labels:
+    app: {{ include "chatapp.name" . }}
+    release: {{ .Release.Name }}
+spec:
+  groups:
+    - name: ws-slo.rules
+      rules:
+        - alert: WebSocketConnectSLOViolation
+          expr: ws_connect_success_rate < 99.9
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "WebSocket connect success rate below SLO"
+            runbook: "pagerduty"
+        - alert: WebSocketLatencySLOViolation
+          expr: histogram_quantile(0.95, rate(ws_latency_bucket[5m])) > 0.2
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "WebSocket latency above SLO"
+            runbook: "pagerduty"

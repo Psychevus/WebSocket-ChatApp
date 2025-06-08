@@ -26,11 +26,21 @@ jobs:
         run: |
           cl_ver=$(grep -Pom1 '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | grep -Po '[0-9]+\.[0-9]+\.[0-9]+')
           echo "version=$cl_ver" >> "$GITHUB_OUTPUT"
+      - name: Extract latest tag
+        id: tag
+        run: |
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
       - name: Compare versions
         run: |
           echo "Code version: ${{ steps.code.outputs.version }}"
           echo "Changelog version: ${{ steps.changelog.outputs.version }}"
+          echo "Git tag: ${{ steps.tag.outputs.version }}"
           if [ "${{ steps.code.outputs.version }}" != "${{ steps.changelog.outputs.version }}" ]; then
             echo "Version mismatch between code and CHANGELOG." >&2
+            exit 1
+          fi
+          if [ "${{ steps.code.outputs.version }}" != "${{ steps.tag.outputs.version }}" ]; then
+            echo "Version mismatch between tag and code." >&2
             exit 1
           fi

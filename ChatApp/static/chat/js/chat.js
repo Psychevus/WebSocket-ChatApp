@@ -44,6 +44,9 @@ function setupWebSocket(conversationId, currentUser, emailUser) {
         }
 
         renderMessage(data, currentUser);
+        if (data.message_id) {
+            chatSocket.send(JSON.stringify({type: 'ack', message_id: data.message_id}));
+        }
     });
 
     // Handle sending messages on form submission

@@ -1,3 +1,7 @@
 [project]
 name = "websocket-chatapp"
 version = "1.0.0"
+
+[tool.poetry.dev-dependencies]
+coverage = "*"
+pytest-cov = "*"

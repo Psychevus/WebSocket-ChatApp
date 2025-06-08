@@ -68,10 +68,14 @@ def erase_user_data(user_id: int):
         return
 
     MessageReceipt.objects.filter(user=user).delete()
-    messages = Message.objects.filter(
+    Message.objects.filter(
         Q(sender=user) | Q(conversation__user1=user) | Q(conversation__user2=user)
-    )
-    messages.delete()
+    ).delete()
     Conversation.objects.filter(Q(user1=user) | Q(user2=user)).delete()
-    user.delete()
+    user.first_name = ""
+    user.last_name = ""
+    user.email = f"deleted-{user.id}@example.com"
+    user.is_active = False
+    user.pending_erasure = False
+    user.save(update_fields=["first_name", "last_name", "email", "is_active", "pending_erasure"])
 

@@ -159,6 +159,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
                 return
 
+            if data.get('type') == 'ack':
+                msg_id = int(data.get('message_id'))
+                await update_last_seen(self.scope['user'].id, self.conversation_id, msg_id)
+                await self.channel_layer.group_send(
+                    self.conversation_group_name,
+                    {
+                        'type': 'chat.read_receipt',
+                        'user_id': self.scope['user'].id,
+                        'message_id': msg_id,
+                    }
+                )
+                return
+
             if data.get('type') == 'public_key':
                 sender = self.scope.get('user')
                 await self.channel_layer.group_send(
@@ -275,6 +288,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "sender_email": event.get("sender_email"),
             "timestamp": event["timestamp"],
             "expires_at": event.get("expires_at"),
+            "message_id": event.get("message_id"),
         }))
 
     async def chat_typing(self, event):
@@ -291,6 +305,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "sender_email": event.get("sender_email"),
             "key": event.get("key"),
         }))
+
+    async def chat_read_receipt(self, event):
+        await self.send_json({
+            "type": "read_receipt",
+            "user_id": event.get("user_id"),
+            "message_id": event.get("message_id"),
+        })
 
     async def chat_pre_stop(self, event):
         await self.close(code=1001)

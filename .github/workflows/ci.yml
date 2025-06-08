@@ -9,7 +9,6 @@ on:
 jobs:
   test-and-scan:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -23,51 +22,49 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
           pip install bandit
+          pip install codecov
 
       - name: Run tests
         run: |
-          coverage run --rcfile=.coveragerc --source='.' manage.py test ChatApp.tests --settings=WebSocketChatApp.test_settings
-          coverage xml -i
+          pytest
+          coverage xml
+
+      - name: Generate OpenAPI schema
+        run: |
+          python manage.py spectacular --file docs/openapi.yaml
+          git diff --exit-code docs/openapi.yaml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
 
       - name: Bandit Scan
-        run: bandit -r websocket_chatapp -lll -f json -o bandit.json
+        run: bandit -r . -lll -f sarif -o bandit.sarif
+
+      - name: Upload Bandit report
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: bandit.sarif
 
       - name: Build Docker image
         run: docker build -t chatapp:test .
 
       - name: Trivy Image Scan
-        id: trivy
-        uses: aquasecurity/trivy-action@0.31.0
-        with:
-          image-ref: chatapp:test
-          format: json
-          output: trivy-image.json
-          ignore-unfixed: true
-          exit-code: 0
-
-      - name: Fail on CVSS > 7
         run: |
-          if jq '.Results[].Vulnerabilities[] | select((.CVSS.nvd.V3Score // 0) > 7)' trivy-image.json | grep -q .; then
-            echo 'Vulnerabilities with CVSS > 7 found'
-            exit 1
-          fi
+          trivy image --severity HIGH,CRITICAL --format json -o trivy.json chatapp:test || true
+          if jq '.Results[].Vulnerabilities | length > 0' trivy.json | grep -q true; then exit 1; fi
 
-        - name: Install gitleaks
-          run: |
-            curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
-            tar -xzf gitleaks.tar.gz gitleaks
-            sudo mv gitleaks /usr/local/bin/
+      - name: Install gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/
 
-        - name: Scan secrets with gitleaks
-          run: gitleaks detect --source . --no-git --report-format=json --report-path=gitleaks.json
+      - name: Scan secrets with gitleaks
+        run: gitleaks detect --source . --no-git --report-format sarif --report-path gitleaks.sarif
 
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload gitleaks report
+        uses: github/codeql-action/upload-sarif@v2
         with:
-          name: security-reports
-          path: |
-            bandit.json
-            trivy-image.json
-            gitleaks.json
-            coverage.xml
+          sarif_file: gitleaks.sarif

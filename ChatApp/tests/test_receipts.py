@@ -21,3 +21,9 @@ class ReceiptsAPITestCase(TestCase):
         data = resp.json()
         self.assertEqual(data[0]['conversation_id'], self.conv.id)
         self.assertEqual(data[0]['unread'], 1)
+
+    def test_unread_endpoint(self):
+        resp = self.client.get('/api/unread/')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data[0]['unread'], 1)

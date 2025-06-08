@@ -44,3 +44,5 @@ class GdprEraseAPITest(TestCase):
         args, kwargs = mock_apply.call_args
         self.assertEqual(args[0][0], self.user.id)
         self.assertEqual(kwargs.get("countdown"), 30 * 24 * 60 * 60)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.pending_erasure)
