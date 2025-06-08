@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from ChatApp.models import CustomUser, Conversation, Message, AuditLog
 
 class AuditLogTestCase(TestCase):

@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -252,7 +253,6 @@ APNS_USE_SANDBOX = os.getenv('APNS_USE_SANDBOX', 'True').lower() in ('true', '1'
 # Celery configuration
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f'redis://{os.getenv("REDIS_HOST", "127.0.0.1")}:6379/0')
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-from datetime import timedelta
 CELERY_BEAT_SCHEDULE = {
     'purge_expired_messages': {
         'task': 'ChatApp.tasks.purge_expired_messages',

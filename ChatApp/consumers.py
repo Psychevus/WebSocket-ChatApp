@@ -16,6 +16,7 @@ from .models import MessageReceipt
 from .tasks import send_push
 from .dlp import run_dlp_hook
 from WebSocketChatApp.telemetry import record_websocket_latency
+from .huddle.rooms import create_room
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -332,9 +333,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
         except asyncio.CancelledError:
             pass
-
-
-from .huddle.rooms import create_room
 
 
 class HuddleConsumer(AsyncWebsocketConsumer):

@@ -1,11 +1,16 @@
-from celery import shared_task
-from django.utils import timezone
-
 import logging
-from django.conf import settings
-
 import collections
 from collections import abc as collections_abc
+
+from apns2.client import APNsClient
+from apns2.payload import Payload
+from celery import shared_task
+from django.conf import settings
+from django.db.models import Q
+from django.utils import timezone
+from pyfcm import FCMNotification
+
+from ChatApp.models import Message, CustomUser, MessageReceipt, Conversation
 
 for name in (
     "MutableSet",
@@ -16,12 +21,6 @@ for name in (
 ):
     if not hasattr(collections, name):
         setattr(collections, name, getattr(collections_abc, name))
-
-from ChatApp.models import Message, CustomUser, MessageReceipt, Conversation
-from django.db.models import Q
-from pyfcm import FCMNotification
-from apns2.client import APNsClient
-from apns2.payload import Payload
 
 @shared_task
 def purge_expired_messages():

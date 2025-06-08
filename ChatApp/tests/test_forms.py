@@ -58,7 +58,9 @@ class CustomUserCreationFormTest(TestCase):
 class CustomAuthenticationFormTest(TestCase):
     def test_custom_authentication_form_valid(self):
         secret = pyotp.random_base32()
-        user = CustomUser.objects.create_user(email="user@example.com", password="password", totp_secret=secret)
+        CustomUser.objects.create_user(
+            email="user@example.com", password="password", totp_secret=secret
+        )
         data = {
             'username': 'user@example.com',
             'password': 'password',
