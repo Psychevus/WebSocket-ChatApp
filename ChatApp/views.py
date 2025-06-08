@@ -3,13 +3,11 @@ import logging
 from datetime import datetime
 
 import redis
-from django.contrib.auth import login, logout
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login
 from django.urls import reverse, NoReverseMatch
-from django.contrib.postgres.search import SearchVector
 from django.db.models import Q
-from django.db.models.functions import Length
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, redirect
@@ -208,7 +206,7 @@ def search_users(request):
                 user_data = [{'id': user.id, 'email': user.email} for user in users]
                 return JsonResponse(user_data, safe=False)
         return JsonResponse([], safe=False)
-    except Exception as e:
+    except Exception:
         return JsonResponse({'error': 'An error occurred while processing the request'}, status=500)
 
 
