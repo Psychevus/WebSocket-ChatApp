@@ -1,0 +1,16 @@
+<div class="space-y-2">
+    <input type="text" name="q" placeholder="Search" class="w-full mb-2 px-2 py-1 border rounded"
+           hx-get="{% url 'chat:sidebar' %}" hx-trigger="keyup changed delay:300ms" hx-target="closest div"/>
+    <ul class="space-y-1">
+        {% for c in conversations %}
+        <li>
+            <a href="#" hx-get="{% url 'chat:conversation_messages' c.id %}" hx-target="#chat-area" hx-swap="innerHTML" class="block p-2 rounded hover:bg-gray-100">
+                <div class="font-medium">{{ c.participant.email }}</div>
+                <div class="text-xs text-gray-500">{{ c.preview }}</div>
+            </a>
+        </li>
+        {% empty %}
+        <li class="text-gray-500 p-2">No Conversations</li>
+        {% endfor %}
+    </ul>
+</div>

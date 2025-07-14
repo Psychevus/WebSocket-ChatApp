@@ -158,15 +158,40 @@ def conversation_view(request, conversation_id):
     if request.user not in [conversation.user1, conversation.user2]:
         return HttpResponseForbidden("You do not have permission to access this conversation.")
 
-    participant = conversation.user2 if conversation.user1 == request.user else conversation.user1
+    return render(request, 'chat/conversation/conversation_view.html', {
+        'conversation': conversation,
+    })
 
+
+@login_required
+def conversations_sidebar(request):
+    query = request.GET.get('q', '').strip()
+    conversations = Conversation.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+    data = []
+    for convo in conversations:
+        participant = convo.user2 if convo.user1 == request.user else convo.user1
+        if query and query.lower() not in participant.email.lower():
+            continue
+        last_msg = convo.messages.order_by('-timestamp').first()
+        preview = last_msg.content[:30] + '…' if last_msg else ''
+        data.append({'id': convo.id, 'participant': participant, 'preview': preview})
+    return render(request, 'chat/conversation/sidebar.html', {'conversations': data})
+
+
+@login_required
+def conversation_messages(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+
+    if request.user not in [conversation.user1, conversation.user2]:
+        return HttpResponseForbidden("You do not have permission to access this conversation.")
+
+    participant = conversation.user2 if conversation.user1 == request.user else conversation.user1
     messages = fetch_messages_from_redis(conversation)
 
-    return render(request, 'chat/conversation/conversation_view.html', {
+    return render(request, 'chat/conversation/messages_partial.html', {
         'conversation': conversation,
         'participant': participant,
         'messages': messages,
-        'conversation_id': conversation_id,
     })
 
 
