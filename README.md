@@ -60,9 +60,12 @@ opentelemetry-instrument daphne -b 0.0.0.0 WebSocketChatApp.asgi:application
 Traces will be printed to STDOUT showing spans for WebSocket connect, receive and database writes.
 
 ## Running Tests
-Use SQLite and the in-memory channel layer when executing tests:
+Install the development dependencies and run the suite with `pytest`. The test
+settings use SQLite and an in-memory channel layer so no external services are
+required. Test coverage is collected automatically and must exceed 80%:
 ```bash
-python manage.py test ChatApp.tests --settings=WebSocketChatApp.test_settings
+pip install -r requirements-dev.txt
+pytest
 ```
 
 Periodically clear expired messages using:
