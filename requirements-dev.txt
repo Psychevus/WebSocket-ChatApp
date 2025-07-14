@@ -1,3 +1,5 @@
 coverage
 pytest-cov
 pytest-django
+fakeredis
+pytest-asyncio
