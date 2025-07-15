@@ -1,0 +1,37 @@
+<div id="conversation-data" data-conversation-id="{{ conversation.id }}"></div>
+<div id="currentuser-data" data-currentuser-id="{{ request.user.id }}"></div>
+<div id="emailuser-data" data-emailuser-id="{{ request.user }}"></div>
+<div class="bg-green-500 p-2 shadow-lg text-white">{{ participant.email }}</div>
+<div class="flex-grow bg-white p-4 overflow-y-auto text-black" id="messages-scroll">
+    <ul id="chat-messages" class="space-y-2">
+        {% for message in messages reversed %}
+            <li class="flex flex-row  {% if message.sender_email == request.user.email %}justify-end{% else %}justify-start{% endif %}">
+                <div class="{% if message.sender_email == request.user.email %}message-container-right{% else %}message-container-left{% endif %}">
+                    <div class="message-bubble shadow-xl">
+                        {{ message.message }}
+                        <div class="timestamp">{{ message.formatted_timestamp }}</div>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+    <div id="typing-indicator" class="text-sm text-gray-500 mt-2" style="display:none"></div>
+</div>
+<div class="bg-white p-3">
+    <form id="chat-form" class="flex space-x-2">
+        {% csrf_token %}
+        <input type="text" id="message-input" placeholder="Type your message..." autofocus class="flex-grow border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-blue-500 text-black">
+        <button type="submit" class="bg-blue-500 text-white px-4 rounded-lg hover:bg-blue-600 transition duration-300 ease-in-out">
+            <img src="{% static 'chat/icons/send.svg' %}" alt="Send" width="24" height="24">
+        </button>
+    </form>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js" integrity="sha512-BLchc1Ir9RJjf0YVLva60EOwVYxTozRXn2A3I0GpF4ehvmhxMMbl8Rh/N6kicPPeiwSTvG4V6wXfXgjxr4gkew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/1.0.2/nacl-util.min.js" integrity="sha512-UVlt0isrxowJ7ZRXGG5pRyYDTLyg6pY70dNDO7xjMnIKh4j/wcgUp3NEPoPFcAckU4iigFsMghvYDn8Apux1Ew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="{% static 'chat/js/chat.js' %}"></script>
+<script>
+    htmx.onLoad(() => {
+        const scroll = document.getElementById('messages-scroll');
+        scroll.scrollTop = scroll.scrollHeight;
+    });
+</script>

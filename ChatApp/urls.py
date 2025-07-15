@@ -14,6 +14,8 @@ urlpatterns = [
 
     path('create/', views.start_conversation, name='start_conversation'),
     path('view/<int:conversation_id>/', views.conversation_view, name='view_conversation'),
+    path('sidebar/', views.conversations_sidebar, name='sidebar'),
+    path('messages/<int:conversation_id>/', views.conversation_messages, name='conversation_messages'),
     path('conversations/', views.conversations_list, name='conversations_list'),
     path('search-users/', views.search_users, name='search_users'),
 ]
