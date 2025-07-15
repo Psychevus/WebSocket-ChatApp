@@ -74,10 +74,11 @@ WebSocketChatApp/asgi.py                          5      0   100%
 WebSocketChatApp/celery.py                        6      0   100%
 WebSocketChatApp/console_tracer_provider.py       7      0   100%
 WebSocketChatApp/routing.py                      11      0   100%
+WebSocketChatApp/settings_demo.py                23     23     0%   1-37
 WebSocketChatApp/telemetry.py                    31      0   100%
 WebSocketChatApp/test_settings.py                13      0   100%
 WebSocketChatApp/wsgi.py                          5      0   100%
 ---------------------------------------------------------------------------
-TOTAL                                           186      0   100%
+TOTAL                                           209     23    89%
 Coverage XML written to file coverage.xml
-======================= 73 passed, 3 warnings in 23.95s ========================
+======================= 73 passed, 3 warnings in 24.26s ========================
