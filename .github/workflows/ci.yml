@@ -28,6 +28,13 @@ jobs:
         run: |
           pytest --cov=ChatApp --cov=WebSocketChatApp --cov-report=xml
 
+      - name: Commit coverage report
+        if: github.ref == 'refs/heads/main'
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: coverage.xml
+          message: Update coverage report [skip ci]
+
       - name: Bandit Scan
         run: bandit -r websocket_chatapp -lll -f json -o bandit.json
 

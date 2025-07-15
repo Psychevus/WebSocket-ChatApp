@@ -6,6 +6,7 @@
 [![Docker Build](https://img.shields.io/github/actions/workflow/status/Psychevus/WebSocket-ChatApp/ci.yml?label=Docker%20Build)](https://github.com/Psychevus/WebSocket-ChatApp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/Psychevus/WebSocket-ChatApp)](LICENSE)
 [![Coverage](https://img.shields.io/badge/dynamic/xml?color=brightgreen&label=coverage&url=https://raw.githubusercontent.com/Psychevus/WebSocket-ChatApp/main/coverage.xml&query=//coverage/@line-rate&suffix=%25)](coverage.xml)
+<small>If the badge does not update right away, append <code>?cacheSeconds=1</code> to the URL to bust the Shields.io cache.</small>
 
 ## Overview
 The WebSocket Chat Application demonstrates real-time messaging using Django, Django Channels and Redis. Conversations are stored in a relational database while Redis handles transient message queuing. Docker Compose orchestrates the services to provide a consistent environment with minimal setup.
