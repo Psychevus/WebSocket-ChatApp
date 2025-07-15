@@ -54,3 +54,6 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
+
+# Disable HTTPS redirection in tests to avoid unexpected 301 responses
+SECURE_SSL_REDIRECT = False

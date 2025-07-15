@@ -5,6 +5,8 @@ from unittest.mock import patch, MagicMock
 
 from WebSocketChatApp.routing import application
 from ChatApp.models import CustomUser, Conversation
+from django.conf import settings
+import jwt
 
 
 class WebSocketIntegrationTests(TransactionTestCase):
@@ -52,3 +54,23 @@ class WebSocketIntegrationTests(TransactionTestCase):
 
         messages = list(convo.messages.values_list("content", flat=True))
         assert messages == contents
+
+    def test_jwt_authentication(self):
+        user = CustomUser.objects.create_user(email="jwt@example.com", password="pass")
+        convo = Conversation.objects.create(user1=user, user2=user)
+
+        token = jwt.encode({"user_id": user.id}, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+        async def inner():
+            with patch("ChatApp.consumers.redis.StrictRedis") as mock_redis:
+                mock_client = MagicMock()
+                mock_redis.return_value.__enter__.return_value = mock_client
+
+                communicator = WebsocketCommunicator(
+                    application, f"ws/chat/{convo.id}/?token={token}"
+                )
+                connected, _ = await communicator.connect()
+                assert connected
+                await communicator.disconnect()
+
+        async_to_sync(inner)()

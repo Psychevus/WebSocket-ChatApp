@@ -1,10 +1,15 @@
 import os
 
-from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
-from ChatApp.middleware import DLPWebSocketMiddleware
+from channels.security.websocket import OriginValidator
+from ChatApp.middleware import (
+    DLPWebSocketMiddleware,
+    JWTAuthMiddleware,
+    WebSocketRateLimitMiddleware,
+)
 from django.core.asgi import get_asgi_application
 from django.urls import re_path
+from django.conf import settings
 
 from ChatApp import consumers
 
@@ -16,13 +21,18 @@ websocket_urlpatterns = [
     re_path(r'ws/huddle/$', consumers.HuddleConsumer.as_asgi()),
 ]
 
-application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-        DLPWebSocketMiddleware(
-            URLRouter(
-                websocket_urlpatterns
-            )
-        )
-    ),
-})
+application = ProtocolTypeRouter(
+    {
+        "http": get_asgi_application(),
+        "websocket": OriginValidator(
+            JWTAuthMiddleware(
+                WebSocketRateLimitMiddleware(
+                    DLPWebSocketMiddleware(
+                        URLRouter(websocket_urlpatterns)
+                    )
+                )
+            ),
+            getattr(settings, "WEBSOCKET_ALLOWED_ORIGINS", []),
+        ),
+    }
+)
