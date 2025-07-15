@@ -22,18 +22,27 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
-          pip install bandit
+          pip install bandit coverage
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          pytest --cov=ChatApp --cov=WebSocketChatApp --cov-report=xml
+          coverage run -m pytest --cov=ChatApp --cov=WebSocketChatApp
+          coverage xml
 
-      - name: Commit coverage report
+      - name: Generate coverage-summary.json
+        if: github.ref == 'refs/heads/main'
+        run: |
+          RATE=$(coverage report | grep TOTAL | awk '{ print $4 }' | sed 's/%//')
+          echo "{ \"line_rate_pct\": $RATE }" > coverage-summary.json
+
+      - name: Commit coverage reports
         if: github.ref == 'refs/heads/main'
         uses: EndBug/add-and-commit@v9
         with:
-          add: coverage.xml
-          message: Update coverage report [skip ci]
+          add: |
+            coverage.xml
+            coverage-summary.json
+          message: Update coverage reports [skip ci]
 
       - name: Bandit Scan
         run: bandit -r websocket_chatapp -lll -f json -o bandit.json
