@@ -13,28 +13,19 @@ jobs:
       PYTHONIOENCODING: "UTF-8"
 
     steps:
-      # ────────────────────────────────
-      # 1. Check out repository
-      # ────────────────────────────────
-      - name: Check out code
+      - name: 🔄 Check out code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history for accurate lint / blame if needed
+          fetch-depth: 0
 
-      # ────────────────────────────────
-      # 2. Set up Python with cache
-      # ────────────────────────────────
-      - name: Set up Python 3.11
+      - name: 🐍 Set up Python 3.11 with cache
         id: setup-python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
           cache: "pip"
 
-      # ────────────────────────────────
-      # 3. Install dependencies
-      # ────────────────────────────────
-      - name: Install project and security tooling
+      - name: 📦 Install dependencies and tooling
         run: |
           echo "::group::Installing dependencies"
           python -m pip install --upgrade pip
@@ -42,10 +33,7 @@ jobs:
           pip install bandit coverage
           echo "::endgroup::"
 
-      # ────────────────────────────────
-      # 4. Run tests + coverage
-      # ────────────────────────────────
-      - name: Execute tests and collect coverage
+      - name: 🧪 Run tests and collect coverage
         run: |
           echo "::group::pytest"
           coverage run --source=ChatApp,WebSocketChatApp -m pytest -q
@@ -53,105 +41,93 @@ jobs:
           coverage xml -o coverage.xml
           coverage report -m > coverage.txt
 
-      # ────────────────────────────────
-      # 5. Fail if coverage < 70 %
-      #    (change the threshold as needed)
-      # ────────────────────────────────
-      - name: Enforce minimum coverage
+      - name: ✅ Enforce minimum test coverage
         run: |
           RATE=$(awk '$1 == "TOTAL" {gsub("%",""); print $(NF)}' coverage.txt)
-          echo "Total coverage: $RATE %"
+          echo "📊 Total test coverage: $RATE%"
           THRESHOLD=70
           if [ "$(echo "$RATE < $THRESHOLD" | bc -l)" -eq 1 ]; then
-            echo "Coverage is below ${THRESHOLD}% – failing the build."
+            echo "❌ Coverage is below ${THRESHOLD}% – failing the build."
             exit 1
           fi
 
-      # ────────────────────────────────
-      # 6. Generate coverage-summary.json (only on main)
-      # ────────────────────────────────
-      - name: Generate JSON summary
+      - name: 📤 Extract coverage percent for badge
+        id: get_coverage
         if: github.ref == 'refs/heads/main'
         run: |
           RATE=$(awk '$1 == "TOTAL" {gsub("%",""); printf "%.2f", $(NF)}' coverage.txt)
-          printf '{ "line_rate_pct": %.2f }\n' "$RATE" > coverage-summary.json
-          cat coverage-summary.json
+          echo "coverage=$RATE" >> $GITHUB_OUTPUT
 
-      - name: Commit coverage artefacts
+      - name: 🏷️ Generate coverage badge
+        if: github.ref == 'refs/heads/main'
+        uses: emibcn/badge-action@v1
+        with:
+          label: coverage
+          status: "${{ steps.get_coverage.outputs.coverage }}%"
+          color: green
+          path: .github/badges/coverage.svg
+
+      - name: 💾 Commit coverage reports and badge
         if: github.ref == 'refs/heads/main'
         uses: EndBug/add-and-commit@v9
         with:
           add: |
             coverage.xml
-            coverage-summary.json
-          message: chore(ci): update coverage artefacts [skip ci]
+            coverage.txt
+            .github/badges/coverage.svg
+          message: chore(ci): update test coverage badge and report [skip ci]
 
-      # ────────────────────────────────
-      # 7. Bandit static analysis
-      # ────────────────────────────────
-      - name: Run Bandit (SAST)
+      - name: 🛡️ Bandit Static Analysis (SAST)
         run: |
           echo "::group::Bandit scan"
           bandit -r websocket_chatapp -lll -f json -o bandit.json
           echo "::endgroup::"
 
-      # ────────────────────────────────
-      # 8. Build Docker image (Buildx + cache)
-      # ────────────────────────────────
-      - name: Set up Buildx
+      - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build application image
+      - name: 🏗️ Build Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           tags: chatapp:test
           load: true
           cache-from: type=gha
-          cache-to:   type=gha,mode=max
+          cache-to: type=gha,mode=max
 
-      # ────────────────────────────────
-      # 9. Trivy image vulnerability scan
-      # ────────────────────────────────
-      - name: Scan image with Trivy
+      - name: 🔍 Scan Docker Image (Trivy)
         id: trivy
         uses: aquasecurity/trivy-action@0.31.0
         with:
           image-ref: chatapp:test
           format: json
           output: trivy-image.json
-          ignore-unfixed: true     # suppress non-fixed CVEs
-          exit-code: 0             # allow post-processing
+          ignore-unfixed: true
+          exit-code: 0
 
-      - name: Fail pipeline if CVSS high/critical
+      - name: 🚨 Fail on High CVSS (Trivy)
         run: |
           echo "::group::Evaluating Trivy results"
           if jq '.Results[].Vulnerabilities[] | select((.CVSS.nvd.V3Score // 0) > 7)' trivy-image.json | grep -q .; then
-            echo 'High/critical CVEs detected (CVSS > 7) – failing build.'
+            echo '❌ High/critical CVEs detected – failing build.'
             exit 1
           fi
           echo "::endgroup::"
 
-      # ────────────────────────────────
-      # 10. Secrets detection with Gitleaks
-      # ────────────────────────────────
-      - name: Install Gitleaks
+      - name: 🔐 Install Gitleaks
         run: |
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
           tar -xzf gitleaks.tar.gz gitleaks
           sudo mv gitleaks /usr/local/bin/
 
-      - name: Scan repository for secrets
+      - name: 🔍 Secret scan with Gitleaks
         run: |
           echo "::group::Gitleaks"
           gitleaks detect --source . --no-git -c .gitleaks.toml \
             --report-format json --report-path gitleaks.json
           echo "::endgroup::"
 
-      # ────────────────────────────────
-      # 11. Upload artefacts
-      # ────────────────────────────────
-      - name: Publish security artefacts
+      - name: ☁️ Upload Security Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
