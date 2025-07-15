@@ -58,7 +58,7 @@ jobs:
           RATE=$(awk '$1 == "TOTAL" {gsub("%",""); printf "%.2f", $(NF)}' coverage.txt)
           echo "coverage=$RATE" >> $GITHUB_OUTPUT
 
-      - name: Ensure badge folder exists
+      - name: 🗂 Ensure badge folder exists
         if: github.ref == 'refs/heads/main'
         run: mkdir -p .github/badges
 
@@ -71,15 +71,15 @@ jobs:
           color: green
           path: .github/badges/coverage.svg
 
-      - name: 💾 Commit coverage reports and badge
+      - name: 📌 Commit coverage badge
         if: github.ref == 'refs/heads/main'
         uses: EndBug/add-and-commit@v9
         with:
           add: |
-            coverage.xml
-            coverage.txt
             .github/badges/coverage.svg
-          message: chore(ci): update test coverage badge and report [skip ci]
+            coverage-summary.json
+          message: "chore(ci): update coverage badge [skip ci]"
+
 
       - name: 🛡️ Bandit Static Analysis (SAST)
         run: |
