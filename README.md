@@ -14,8 +14,10 @@ The WebSocket Chat Application demonstrates real-time messaging using Django, Dj
 - Live chat over WebSocket connections
 - Persistent conversation and message history
 - Rate limiting on HTTP views and WebSocket endpoints
+- JWT-secured WebSocket authentication
 - Robust form validation and logging
 - Message sanitisation and length checks for extra security
+- HTTPS enforcement and secure cookies in production
 - WebSocket connections automatically use `wss://` when the site is served over HTTPS
 - Typing indicators show when participants are composing a message
 - End-to-end encryption for 1-to-1 chats uses the double-ratchet algorithm with

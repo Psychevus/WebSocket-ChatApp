@@ -197,13 +197,29 @@ CHANNEL_LAYERS = {
     },
 }
 
+# JSON Web Token settings for WebSocket authentication
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", SECRET_KEY)
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+
+# Allowed origins for WebSocket handshake
+WEBSOCKET_ALLOWED_ORIGINS = [
+    origin
+    for origin in os.getenv("WEBSOCKET_ALLOWED_ORIGINS", "*").split(",")
+    if origin
+]
+
+# Maximum simultaneous WebSocket connections per minute per user/IP
+WS_CONNECTION_LIMIT = int(os.getenv("WS_CONNECTION_LIMIT", "5"))
+
 # Security hardening
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 X_FRAME_OPTIONS = 'DENY'
-SECURE_SSL_REDIRECT = os.getenv('DJANGO_SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes')
+SECURE_SSL_REDIRECT = os.getenv(
+    'DJANGO_SECURE_SSL_REDIRECT', 'False' if DEBUG else 'True'
+).lower() in ('true', '1', 'yes')
 SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0' if DEBUG else '3600'))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
