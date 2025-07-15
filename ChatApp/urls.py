@@ -18,4 +18,9 @@ urlpatterns = [
     path('messages/<int:conversation_id>/', views.conversation_messages, name='conversation_messages'),
     path('conversations/', views.conversations_list, name='conversations_list'),
     path('search-users/', views.search_users, name='search_users'),
+    path('rooms/', views.rooms_list, name='rooms_list'),
+    path('rooms/create/', views.create_room, name='create_room'),
+    path('rooms/join/<int:room_id>/', views.join_room, name='join_room'),
+    path('rooms/<int:room_id>/', views.room_view, name='room_view'),
+    path('rooms/messages/<int:room_id>/', views.room_messages, name='room_messages'),
 ]

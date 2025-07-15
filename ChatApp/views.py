@@ -16,8 +16,8 @@ from django.shortcuts import render, redirect
 from django_ratelimit.decorators import ratelimit
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
 
-from .forms import StartConversationForm
-from .models import Conversation, CustomUser, AuditLog
+from .forms import StartConversationForm, ChatRoomForm
+from .models import Conversation, CustomUser, AuditLog, ChatRoom, RoomMessage
 
 logger = logging.getLogger(__name__)
 
@@ -254,3 +254,51 @@ def audit_logs_view(request):
         for log in logs
     ]
     return JsonResponse(data, safe=False)
+
+
+# ---------------------------- Chat Rooms ----------------------------
+
+@login_required
+def rooms_list(request):
+    rooms = ChatRoom.objects.all()
+    return render(request, 'chat/rooms/rooms_list.html', {'rooms': rooms})
+
+
+@login_required
+def create_room(request):
+    if request.method == 'POST':
+        form = ChatRoomForm(request.POST)
+        if form.is_valid():
+            room = form.save()
+            room.members.add(request.user)
+            return redirect('chat:room_view', room_id=room.id)
+    else:
+        form = ChatRoomForm()
+    return render(request, 'chat/rooms/create_room.html', {'form': form})
+
+
+@login_required
+def join_room(request, room_id):
+    room = get_object_or_404(ChatRoom, id=room_id)
+    room.members.add(request.user)
+    return redirect('chat:room_view', room_id=room.id)
+
+
+@login_required
+def room_view(request, room_id):
+    room = get_object_or_404(ChatRoom, id=room_id)
+    if request.user not in room.members.all():
+        return HttpResponseForbidden('You are not a member of this room.')
+    return render(request, 'chat/rooms/room_view.html', {'room': room})
+
+
+@login_required
+def room_messages(request, room_id):
+    room = get_object_or_404(ChatRoom, id=room_id)
+    if request.user not in room.members.all():
+        return HttpResponseForbidden('You are not a member of this room.')
+    messages = RoomMessage.objects.filter(room=room)
+    return render(request, 'chat/rooms/messages_partial.html', {
+        'room': room,
+        'messages': messages,
+    })

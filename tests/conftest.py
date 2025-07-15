@@ -1,5 +1,7 @@
 import pytest
 import fakeredis
+import django
+django.setup()
 from ChatApp import consumers
 
 class DummyRedis(fakeredis.FakeStrictRedis):

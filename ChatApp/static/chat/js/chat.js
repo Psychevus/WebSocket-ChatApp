@@ -93,6 +93,98 @@ function setupWebSocket(conversationId, currentUser, emailUser) {
     });
 }
 
+function setupRoomWebSocket(roomId, currentUser, emailUser) {
+    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const chatSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/rooms/${roomId}/`);
+    let keyPair = null;
+    let sharedSecret = null;
+
+    chatSocket.addEventListener('error', (e) => {
+        console.error('WebSocket error:', e);
+    });
+
+    chatSocket.addEventListener('open', () => {
+        if (window.nacl) {
+            keyPair = nacl.box.keyPair();
+            chatSocket.send(JSON.stringify({type: 'public_key', key: nacl.util.encodeBase64(keyPair.publicKey)}));
+        }
+    });
+
+    chatSocket.addEventListener('message', (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'typing') {
+            showTypingIndicator(data.sender_email);
+            return;
+        }
+
+        if (data.type === 'public_key' && keyPair) {
+            if (data.sender_id !== currentUser) {
+                const otherKey = nacl.util.decodeBase64(data.key);
+                sharedSecret = nacl.box.before(otherKey, keyPair.secretKey);
+            }
+            return;
+        }
+
+        if (data.nonce && data.message && sharedSecret) {
+            const nonce = nacl.util.decodeBase64(data.nonce);
+            const ciphertext = nacl.util.decodeBase64(data.message);
+            const decrypted = nacl.box.open.after(ciphertext, nonce, sharedSecret);
+            if (decrypted) {
+                data.message = nacl.util.encodeUTF8(decrypted);
+            } else {
+                console.error('Failed to decrypt message');
+                return;
+            }
+        }
+
+        renderMessage(data, currentUser);
+    });
+
+    const chatForm = document.querySelector('#chat-form');
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const messageInputDom = document.querySelector('#message-input');
+        const message = messageInputDom.value;
+
+        if (sharedSecret) {
+            const nonce = nacl.randomBytes(nacl.box.nonceLength);
+            const ciphertext = nacl.box.after(nacl.util.decodeUTF8(message), nonce, sharedSecret);
+            chatSocket.send(JSON.stringify({
+                nonce: nacl.util.encodeBase64(nonce),
+                message: nacl.util.encodeBase64(ciphertext),
+                sender_id: currentUser,
+                sender_email: emailUser,
+            }));
+        } else {
+            chatSocket.send(JSON.stringify({
+                message,
+                sender_id: currentUser,
+                sender_email: emailUser,
+            }));
+        }
+
+        messageInputDom.value = '';
+        messageInputDom.focus();
+    });
+
+    const messageInput = document.querySelector('#message-input');
+    let typingTimeout;
+    messageInput.addEventListener('input', () => {
+        chatSocket.send(JSON.stringify({ type: 'typing' }));
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            chatSocket.send(JSON.stringify({ type: 'typing' }));
+        }, 1000);
+    });
+
+    const chatMessages = document.querySelector('#chat-messages');
+    window.addEventListener('load', () => {
+        chatMessages.scrollIntoView({behavior: 'smooth', block: 'end'});
+        const messageInputDom = document.querySelector('#message-input');
+        messageInputDom.focus();
+    });
+}
+
 // Function to render a message in the chat
 function renderMessage(message, currentUser, depth = 0, container) {
     const chatMessages = container || document.querySelector('#chat-messages');
@@ -192,4 +284,12 @@ if (conversationElement && currentUserElement && emailUserElement) {
 
     // Initialize WebSocket connection
     setupWebSocket(conversationId, currentUser, emailUser);
+}
+
+const roomElement = document.getElementById('room-data');
+if (roomElement && currentUserElement && emailUserElement) {
+    const roomId = parseInt(roomElement.getAttribute('data-room-id'));
+    const currentUser = parseInt(currentUserElement.getAttribute('data-currentuser-id'));
+    const emailUser = emailUserElement.getAttribute('data-emailuser-id');
+    setupRoomWebSocket(roomId, currentUser, emailUser);
 }

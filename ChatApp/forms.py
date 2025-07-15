@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Conversation, CustomUser
+from .models import Conversation, CustomUser, ChatRoom
 
 
 class StartConversationForm(forms.Form):
@@ -96,3 +96,9 @@ class CustomAuthenticationForm(AuthenticationForm):
 
     class Meta:
         fields = ['email', 'password', 'otp_token']
+
+
+class ChatRoomForm(forms.ModelForm):
+    class Meta:
+        model = ChatRoom
+        fields = ["name"]
