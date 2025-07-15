@@ -9,6 +9,7 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends gcc libffi-dev libssl-dev \
         default-libmysqlclient-dev && \
     rm -rf /var/lib/apt/lists/*

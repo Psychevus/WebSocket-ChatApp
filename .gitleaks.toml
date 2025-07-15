@@ -1,0 +1,10 @@
+[allowlist]
+  description = "false positives"
+  regexes = [
+    'insecure-secret-key',
+    'chatapppassword',
+    'root_password',
+    '<your secret key>',
+    '<OIDC client secret>',
+    'RANDOM_SECRET'
+  ]

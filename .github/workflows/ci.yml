@@ -68,7 +68,7 @@ jobs:
           sudo mv gitleaks /usr/local/bin/
 
       - name: Scan secrets with gitleaks
-        run: gitleaks detect --source . --no-git --report-format=json --report-path=gitleaks.json
+        run: gitleaks detect --source . --no-git -c .gitleaks.toml --report-format=json --report-path=gitleaks.json
 
       - name: Upload artifacts
         if: always()
