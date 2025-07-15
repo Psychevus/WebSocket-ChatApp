@@ -11,7 +11,13 @@ from django.utils import timezone
 from opentelemetry import trace
 
 from django.conf import settings
-from .models import Conversation, Message, DeviceToken
+from .models import (
+    Conversation,
+    Message,
+    DeviceToken,
+    ChatRoom,
+    RoomMessage,
+)
 from .models import MessageReceipt
 from .tasks import send_push
 from .dlp import run_dlp_hook
@@ -332,3 +338,49 @@ class HuddleConsumer(AsyncWebsocketConsumer):
                 "roomId": room.id,
                 "routerRtpCapabilities": room.router_rtp_capabilities,
             }))
+
+
+class ChatRoomConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
+        self.room_group_name = f"chat.room.{self.room_id}"
+
+        if not self.scope.get("user") or not self.scope["user"].is_authenticated:
+            await self.close()
+            return
+
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data: str):
+        data = json.loads(text_data)
+        message = bleach.clean(data.get("message", ""))
+        sender = self.scope.get("user")
+        timestamp = timezone.now()
+
+        room = await database_sync_to_async(ChatRoom.objects.get)(pk=self.room_id)
+        await database_sync_to_async(RoomMessage.objects.create)(
+            room=room, sender=sender, content=message, timestamp=timestamp
+        )
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "room.message",
+                "message": message,
+                "sender_id": sender.id if sender else None,
+                "sender_email": sender.email if sender else None,
+                "timestamp": timestamp.isoformat(),
+            },
+        )
+
+    async def room_message(self, event):
+        await self.send(text_data=json.dumps({
+            "message": event["message"],
+            "sender_id": event.get("sender_id"),
+            "sender_email": event.get("sender_email"),
+            "timestamp": event.get("timestamp"),
+        }))

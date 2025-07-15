@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="m-10">
+    <h2 class="text-xl font-semibold mb-4">Chat Rooms</h2>
+    <ul class="space-y-1">
+        {% for room in rooms %}
+            <li class="bg-white shadow rounded p-2">
+                <a href="{% url 'chat:room_view' room.id %}">{{ room.name }}</a>
+            </li>
+        {% empty %}
+            <li>No rooms available.</li>
+        {% endfor %}
+    </ul>
+    <a class="block mt-4 py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600" href="{% url 'chat:create_room' %}">Create Room</a>
+</div>
+{% endblock %}

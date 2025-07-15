@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex h-screen">
+    <aside class="w-1/4 border-r p-4 overflow-y-auto" hx-get="{% url 'chat:rooms_list' %}" hx-trigger="load" hx-target="this"></aside>
+    <section class="flex-1 flex flex-col" id="chat-area" hx-get="{% url 'chat:room_messages' room.id %}" hx-trigger="load" hx-target="this"></section>
+</div>
+{% endblock %}
