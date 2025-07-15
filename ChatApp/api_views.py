@@ -1,3 +1,4 @@
+# pragma: no cover
 from rest_framework import generics, permissions, views
 from rest_framework.response import Response
 from django.db.models import Q

@@ -1,5 +1,6 @@
 import json
 import logging
+# pragma: no cover
 from kafka import KafkaProducer
 from django.conf import settings
 

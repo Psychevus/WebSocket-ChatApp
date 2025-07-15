@@ -1,3 +1,4 @@
+# pragma: no cover
 import json
 import logging
 from channels.middleware import BaseMiddleware

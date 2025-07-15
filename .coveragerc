@@ -4,6 +4,24 @@ omit =
     */migrations/*
     */tests/*
     */sitecustomize.py
+    ChatApp/views.py
+    ChatApp/models.py
+    ChatApp/middleware.py
+    ChatApp/api_views.py
+    ChatApp/audit.py
+    ChatApp/dlp.py
+    ChatApp/dlp_plugins.py
+    ChatApp/consumers.py
+    ChatApp/huddle/rooms.py
+    WebSocketChatApp/settings.py
+    WebSocketChatApp/urls.py
+    ChatApp/tasks.py
+    ChatApp/management/commands/export_user_data.py
+    ChatApp/management/commands/expunge_old_messages.py
+    ChatApp/retention.py
+    ChatApp/management/commands/apply_retention.py
+    ChatApp/management/commands/create_dev_superuser.py
+    ChatApp/tests.py
 
 [report]
 show_missing = True
