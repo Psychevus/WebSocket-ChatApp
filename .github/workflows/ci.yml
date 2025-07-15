@@ -26,8 +26,7 @@ jobs:
 
       - name: Run tests
         run: |
-          coverage run --rcfile=.coveragerc --source='.' manage.py test ChatApp.tests --settings=WebSocketChatApp.test_settings
-          coverage xml -i
+          pytest --cov=ChatApp --cov=WebSocketChatApp --cov-report=xml
 
       - name: Bandit Scan
         run: bandit -r websocket_chatapp -lll -f json -o bandit.json
