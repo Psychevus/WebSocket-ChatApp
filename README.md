@@ -52,12 +52,7 @@ Metrics are exported using OpenTelemetry and Prometheus. Grafana Live can be use
 The metrics HTTP server exposes `/metrics` so Prometheus can scrape `http://localhost:8001/metrics`.
 Import `docs/grafana-dashboard.json` into Grafana to view a panel showing the P95 WebSocket latency.
 
-Tracing is also enabled. Run the app with:
-```bash
-OTEL_PYTHON_TRACER_PROVIDER=WebSocketChatApp.console_tracer_provider:tracer_provider \
-opentelemetry-instrument daphne -b 0.0.0.0 WebSocketChatApp.asgi:application
-```
-Traces will be printed to STDOUT showing spans for WebSocket connect, receive and database writes.
+Jaeger is included in the Docker Compose stack for distributed tracing. The Django service exports spans to the Jaeger agent automatically and the UI is available at `http://localhost:16686`.
 
 ## Running Tests
 Install the development dependencies and run the suite with `pytest`. The test

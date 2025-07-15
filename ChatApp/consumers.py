@@ -1,27 +1,28 @@
 import asyncio
 import json
 import logging
-import redis
-import bleach
 
-from channels.generic.websocket import AsyncWebsocketConsumer
+import bleach
+import redis
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 from opentelemetry import trace
 
-from django.conf import settings
+from WebSocketChatApp.telemetry import record_pubsub_latency, record_websocket_latency
+
+from .dlp import run_dlp_hook
 from .models import (
-    Conversation,
-    Message,
-    DeviceToken,
     ChatRoom,
+    Conversation,
+    DeviceToken,
+    Message,
+    MessageReceipt,
     RoomMessage,
 )
-from .models import MessageReceipt
 from .tasks import send_push
-from .dlp import run_dlp_hook
-from WebSocketChatApp.telemetry import record_websocket_latency
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -73,16 +74,18 @@ def get_device_tokens(user_id: int):
     return list(DeviceToken.objects.filter(user_id=user_id).values("token", "platform"))
 
 
-def check_rate_limit(rate, method='RATELIMIT_KEY'):
+def check_rate_limit(rate, method="RATELIMIT_KEY"):
     def decorator(func):
         async def wrapper(self, text_data):
-            sender = self.scope.get('user')
+            sender = self.scope.get("user")
 
             if await self.is_ratelimited(sender, int(rate)):
                 await asyncio.sleep(5)
-                await self.send_json({
-                    "message": "Rate limit exceeded. Please wait before sending another message."
-                })
+                await self.send_json(
+                    {
+                        "message": "Rate limit exceeded. Please wait before sending another message."
+                    }
+                )
                 return
 
             await func(self, text_data)
@@ -94,14 +97,17 @@ def check_rate_limit(rate, method='RATELIMIT_KEY'):
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def before_send(self, message: str, sender):
-        hook = getattr(settings, 'DLP_BEFORE_SEND_HOOK', 'ChatApp.dlp.default_dlp_callback')
+        hook = getattr(
+            settings, "DLP_BEFORE_SEND_HOOK", "ChatApp.dlp.default_dlp_callback"
+        )
         return await run_dlp_hook(message, sender, hook)
 
     async def send_json(self, content):
         await self.send(text_data=json.dumps(content))
+
     async def is_ratelimited(self, user, rate):
         user_id = int(user.id) if user.id else None
-        cache_key = f'rate_limit_{user_id}'
+        cache_key = f"rate_limit_{user_id}"
 
         remaining_requests = cache.get_or_set(cache_key, rate, rate)
 
@@ -119,16 +125,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             logger.info("ChatConsumer connect called")
 
-            if not self.scope.get('user') or not self.scope['user'].is_authenticated:
+            if not self.scope.get("user") or not self.scope["user"].is_authenticated:
                 await self.close()
                 return
 
         await self.channel_layer.group_add(
-            self.conversation_group_name,
-            self.channel_name
+            self.conversation_group_name, self.channel_name
         )
 
-        await register_conversation(str(self.conversation_id), self.scope['user'].id)
+        await register_conversation(str(self.conversation_id), self.scope["user"].id)
 
         await self.accept()
         self.last_activity = timezone.now()
@@ -139,13 +144,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
-            self.conversation_group_name,
-            self.channel_name
+            self.conversation_group_name, self.channel_name
         )
-        await unregister_conversation(str(self.conversation_id), self.scope['user'].id)
+        await unregister_conversation(str(self.conversation_id), self.scope["user"].id)
         if hasattr(self, "presence_task"):
             self.presence_task.cancel()
-        logger.info(f"User {self.scope['user']} disconnected from conversation {self.conversation_id}")
+        logger.info(
+            f"User {self.scope['user']} disconnected from conversation {self.conversation_id}"
+        )
 
     @check_rate_limit(rate=1)
     async def receive(self, text_data: str):
@@ -153,35 +159,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.last_activity = timezone.now()
             data = json.loads(text_data)
 
-            if data.get('type') == 'typing':
-                sender = self.scope.get('user')
+            if data.get("type") == "typing":
+                sender = self.scope.get("user")
                 await self.channel_layer.group_send(
                     self.conversation_group_name,
                     {
-                        'type': 'chat.typing',
-                        'sender_id': sender.id if sender else None,
-                        'sender_email': sender.email if sender else None,
-                    }
+                        "type": "chat.typing",
+                        "sender_id": sender.id if sender else None,
+                        "sender_email": sender.email if sender else None,
+                    },
                 )
                 return
 
-            if data.get('type') == 'public_key':
-                sender = self.scope.get('user')
+            if data.get("type") == "public_key":
+                sender = self.scope.get("user")
                 await self.channel_layer.group_send(
                     self.conversation_group_name,
                     {
-                        'type': 'chat.public_key',
-                        'sender_id': sender.id if sender else None,
-                        'sender_email': sender.email if sender else None,
-                        'key': data.get('key'),
-                    }
+                        "type": "chat.public_key",
+                        "sender_id": sender.id if sender else None,
+                        "sender_email": sender.email if sender else None,
+                        "key": data.get("key"),
+                    },
                 )
                 return
 
-            ciphertext = data.get('ciphertext')
-            nonce = data.get('nonce')
-            ephemeral = data.get('ephemeral')
-            message_content = data.get('message', '')
+            ciphertext = data.get("ciphertext")
+            nonce = data.get("nonce")
+            ephemeral = data.get("ephemeral")
+            message_content = data.get("message", "")
 
             if not ciphertext:
                 # Clean message content to avoid XSS when not encrypted
@@ -189,16 +195,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     message_content, tags=[], attributes={}, strip=True
                 )
 
-                if len(message_content) > getattr(settings, 'MESSAGE_MAX_LENGTH', 500):
-                    await self.send_json({
-                        "message": "Message too long."
-                    })
+                if len(message_content) > getattr(settings, "MESSAGE_MAX_LENGTH", 500):
+                    await self.send_json({"message": "Message too long."})
                     return
-            sender = self.scope.get('user')
+            sender = self.scope.get("user")
             timestamp = timezone.now()
             expires_at = None
             if ephemeral:
-                ttl = int(getattr(settings, 'EPHEMERAL_MESSAGE_TTL', '30'))
+                ttl = int(getattr(settings, "EPHEMERAL_MESSAGE_TTL", "30"))
                 expires_at = timestamp + timezone.timedelta(seconds=ttl)
 
             logger.info(f"Received message: '{message_content}' from User {sender}")
@@ -210,7 +214,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             try:
                 with tracer.start_as_current_span("db_write"):
                     conversation_key = f"conversation_{self.conversation_id}"
-                    conversation = await database_sync_to_async(Conversation.objects.get)(pk=self.conversation_id)
+                    conversation = await database_sync_to_async(
+                        Conversation.objects.get
+                    )(pk=self.conversation_id)
                     msg = await database_sync_to_async(Message.objects.create)(
                         conversation=conversation,
                         sender=sender,
@@ -220,37 +226,46 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     )
 
                     message_data = {
-                        'id': msg.id,
-                        'message': message_content,
-                        'nonce': nonce,
-                        'sender_id': sender.id if sender else None,
-                        'sender_email': sender.email if sender else None,
-                        'timestamp': timestamp.isoformat(),
-                        'expires_at': expires_at.isoformat() if expires_at else None,
+                        "id": msg.id,
+                        "message": message_content,
+                        "nonce": nonce,
+                        "sender_id": sender.id if sender else None,
+                        "sender_email": sender.email if sender else None,
+                        "timestamp": timestamp.isoformat(),
+                        "expires_at": expires_at.isoformat() if expires_at else None,
                     }
 
                     message_json = json.dumps(message_data)
 
-                    with redis.StrictRedis(host="localhost", port=6379, db=0) as redis_client:
+                    with redis.StrictRedis(
+                        host="localhost", port=6379, db=0
+                    ) as redis_client:
                         redis_client.lpush(conversation_key, message_json)
 
                 await update_last_seen(sender.id, self.conversation_id, msg.id)
 
-                await self.channel_layer.group_send(
-                    self.conversation_group_name,
-                    {
-                        'type': 'chat.message',
-                        'message': message_content,
-                        'nonce': nonce,
-                        'sender_id': sender.id if sender else None,
-                        'sender_email': sender.email if sender else None,
-                        'timestamp': timestamp.isoformat(),
-                        'expires_at': expires_at.isoformat() if expires_at else None,
-                        'message_id': msg.id,
-                    }
-                )
+                with tracer.start_as_current_span("redis.publish"):
+                    await self.channel_layer.group_send(
+                        self.conversation_group_name,
+                        {
+                            "type": "chat.message",
+                            "message": message_content,
+                            "nonce": nonce,
+                            "sender_id": sender.id if sender else None,
+                            "sender_email": sender.email if sender else None,
+                            "timestamp": timestamp.isoformat(),
+                            "expires_at": (
+                                expires_at.isoformat() if expires_at else None
+                            ),
+                            "message_id": msg.id,
+                        },
+                    )
 
-                recipient = conversation.user2 if conversation.user1_id == sender.id else conversation.user1
+                recipient = (
+                    conversation.user2
+                    if conversation.user1_id == sender.id
+                    else conversation.user1
+                )
                 offline = not redis_client.sismember(
                     f"active_conversation_users:{self.conversation_id}", recipient.id
                 )
@@ -262,47 +277,68 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         )
 
             except (redis.ConnectionError, Exception) as e:
-                logger.error(f"An error occurred while storing the message in Redis or DB: {str(e)}")
+                logger.error(
+                    f"An error occurred while storing the message in Redis or DB: {str(e)}"
+                )
 
     async def chat_message(self, event):
-        message = event["message"]
+        with tracer.start_as_current_span("redis.consume"):
+            message = event["message"]
 
-        start_time = timezone.datetime.fromisoformat(event["timestamp"])
-        latency_ms = (timezone.now() - start_time).total_seconds() * 1000
-        record_websocket_latency(latency_ms)
+            start_time = timezone.datetime.fromisoformat(event["timestamp"])
+            latency_ms = (timezone.now() - start_time).total_seconds() * 1000
+            logger.info(f"Redis pub/sub latency: {latency_ms:.2f} ms")
+            record_websocket_latency(latency_ms)
+            record_pubsub_latency(latency_ms)
 
         if event.get("message_id"):
-            await update_last_seen(self.scope["user"].id, self.conversation_id, event["message_id"])
+            await update_last_seen(
+                self.scope["user"].id, self.conversation_id, event["message_id"]
+            )
 
-        await self.send(text_data=json.dumps({
-            "message": message,
-            "nonce": event.get("nonce"),
-            "sender_id": event.get("sender_id"),
-            "sender_email": event.get("sender_email"),
-            "timestamp": event["timestamp"],
-            "expires_at": event.get("expires_at"),
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "message": message,
+                    "nonce": event.get("nonce"),
+                    "sender_id": event.get("sender_id"),
+                    "sender_email": event.get("sender_email"),
+                    "timestamp": event["timestamp"],
+                    "expires_at": event.get("expires_at"),
+                }
+            )
+        )
 
     async def chat_typing(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "typing",
-            "sender_id": event.get("sender_id"),
-            "sender_email": event.get("sender_email"),
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "typing",
+                    "sender_id": event.get("sender_id"),
+                    "sender_email": event.get("sender_email"),
+                }
+            )
+        )
 
     async def chat_public_key(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "public_key",
-            "sender_id": event.get("sender_id"),
-            "sender_email": event.get("sender_email"),
-            "key": event.get("key"),
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "public_key",
+                    "sender_id": event.get("sender_id"),
+                    "sender_email": event.get("sender_email"),
+                    "key": event.get("key"),
+                }
+            )
+        )
 
     async def chat_pre_stop(self, event):
         await self.close(code=1001)
 
     async def chat_presence_update(self, event):
-        await self.send_json({"type": "presence_update", "user_id": event.get("user_id")})
+        await self.send_json(
+            {"type": "presence_update", "user_id": event.get("user_id")}
+        )
 
     async def presence_loop(self):
         try:
@@ -333,11 +369,15 @@ class HuddleConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         if data.get("action") == "start_huddle":
             room = create_room()
-            await self.send(text_data=json.dumps({
-                "type": "huddle_started",
-                "roomId": room.id,
-                "routerRtpCapabilities": room.router_rtp_capabilities,
-            }))
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "huddle_started",
+                        "roomId": room.id,
+                        "routerRtpCapabilities": room.router_rtp_capabilities,
+                    }
+                )
+            )
 
 
 class ChatRoomConsumer(AsyncWebsocketConsumer):
@@ -378,9 +418,13 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         )
 
     async def room_message(self, event):
-        await self.send(text_data=json.dumps({
-            "message": event["message"],
-            "sender_id": event.get("sender_id"),
-            "sender_email": event.get("sender_email"),
-            "timestamp": event.get("timestamp"),
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "message": event["message"],
+                    "sender_id": event.get("sender_id"),
+                    "sender_email": event.get("sender_email"),
+                    "timestamp": event.get("timestamp"),
+                }
+            )
+        )
