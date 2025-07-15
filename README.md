@@ -5,12 +5,6 @@
 [![License](https://img.shields.io/github/license/Psychevus/WebSocket-ChatApp)](LICENSE)
 ![Coverage](.github/badges/coverage.svg)
 [![Coverage Status](https://img.shields.io/badge/coverage-passing-brightgreen)](#)
-[![Render Deploy](https://img.shields.io/badge/Render-Demo-blue)](https://websocket-chat-demo.onrender.com)
-
-
-## Live Demo on Render
-A stripped-down profile is deployed on **Render Free Tier**
-👉 [https://websocket-chat-demo.onrender.com](https://websocket-chat-demo.onrender.com)
 
 
 ## Project Overview
