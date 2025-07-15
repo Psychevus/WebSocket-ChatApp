@@ -3,7 +3,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/Psychevus/WebSocket-ChatApp?style=social)](https://github.com/Psychevus/WebSocket-ChatApp/stargazers)
 [![Docker Build](https://img.shields.io/github/actions/workflow/status/Psychevus/WebSocket-ChatApp/ci.yml?label=Docker%20Build)](https://github.com/Psychevus/WebSocket-ChatApp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/Psychevus/WebSocket-ChatApp)](LICENSE)
-[![Coverage](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=coverage&url=https://raw.githubusercontent.com/Psychevus/WebSocket-ChatApp/main/coverage-summary.json&query=$.line_rate_pct&suffix=%25&cacheSeconds=1)](coverage-summary.json)
+![Coverage](.github/badges/coverage.svg)
+
 
 ## Project Overview
 
