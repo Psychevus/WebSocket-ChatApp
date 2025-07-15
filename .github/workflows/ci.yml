@@ -28,11 +28,16 @@ jobs:
         run: |
           coverage run -m pytest --cov=ChatApp --cov=WebSocketChatApp
           coverage xml
+          coverage report -m > coverage.txt
 
       - name: Generate coverage-summary.json
         if: github.ref == 'refs/heads/main'
         run: |
-          RATE=$(coverage report | grep TOTAL | awk '{ print $4 }' | sed 's/%//')
+          RATE=$(awk '/TOTAL/ {gsub("%",""); printf "%.2f", $4}' coverage.txt)
+          if [ -z "$RATE" ]; then
+            echo "Coverage extraction failed. Setting line_rate_pct to 0.00"
+            RATE=0.00
+          fi
           echo "{ \"line_rate_pct\": $RATE }" > coverage-summary.json
 
       - name: Commit coverage reports
