@@ -1,5 +1,10 @@
 # WebSocket Chat Application
 
+![ChatApp Logo](https://placehold.co/600x150?text=ChatApp+Logo)
+
+[![GitHub stars](https://img.shields.io/github/stars/Psychevus/WebSocket-ChatApp?style=social)](https://github.com/Psychevus/WebSocket-ChatApp/stargazers)
+[![Docker Build](https://img.shields.io/github/actions/workflow/status/Psychevus/WebSocket-ChatApp/ci.yml?label=Docker%20Build)](https://github.com/Psychevus/WebSocket-ChatApp/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/Psychevus/WebSocket-ChatApp)](LICENSE)
 [![Coverage](https://img.shields.io/badge/dynamic/xml?color=brightgreen&label=coverage&url=https://raw.githubusercontent.com/Psychevus/WebSocket-ChatApp/main/coverage.xml&query=//coverage/@line-rate&suffix=%25)](coverage.xml)
 
 ## Overview
@@ -31,6 +36,14 @@ The WebSocket Chat Application demonstrates real-time messaging using Django, Dj
 - Role-based access control (Owner, Admin, Analyst)
 - Dockerised services for the application, MySQL database and Redis
 - Real-time telemetry with OpenTelemetry, Prometheus and Grafana
+
+## Why use this?
+- Plug-and-play Docker deployment
+- Real-time updates powered by WebSockets
+- Encryption built-in for private chats
+- Robust rate limiting and security features
+
+![UI Screenshot](https://placehold.co/800x400?text=ChatApp+UI)
 
 ## Quick Start
 ### Prerequisites
