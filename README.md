@@ -1,180 +1,183 @@
 # WebSocket Chat Application
 
-![ChatApp Logo](https://placehold.co/600x150?text=ChatApp+Logo)
-
 [![GitHub stars](https://img.shields.io/github/stars/Psychevus/WebSocket-ChatApp?style=social)](https://github.com/Psychevus/WebSocket-ChatApp/stargazers)
 [![Docker Build](https://img.shields.io/github/actions/workflow/status/Psychevus/WebSocket-ChatApp/ci.yml?label=Docker%20Build)](https://github.com/Psychevus/WebSocket-ChatApp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/Psychevus/WebSocket-ChatApp)](LICENSE)
 [![Coverage](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=coverage&url=https://raw.githubusercontent.com/Psychevus/WebSocket-ChatApp/main/coverage-summary.json&query=$.line_rate_pct&suffix=%25&cacheSeconds=1)](coverage-summary.json)
 
+## Project Overview
 
-## Overview
-The WebSocket Chat Application demonstrates real-time messaging using Django, Django Channels and Redis. Conversations are stored in a relational database while Redis handles transient message queuing. Docker Compose orchestrates the services to provide a consistent environment with minimal setup.
+This repository contains a modular, production-grade real-time chat system built on Django and Django Channels, leveraging Redis as the asynchronous message broker and WebSockets for real-time bidirectional communication. The system prioritizes encryption, resilience, and observability—making it suitable for secure, scalable deployments in enterprise environments.
 
-## Features
-- Live chat over WebSocket connections
-- Persistent conversation and message history
-- Rate limiting on HTTP views and WebSocket endpoints
-- JWT-secured WebSocket authentication
-- Robust form validation and logging
-- Message sanitisation and length checks for extra security
-- HTTPS enforcement and secure cookies in production
-- WebSocket connections automatically use `wss://` when the site is served over HTTPS
-- Typing indicators show when participants are composing a message
-- End-to-end encryption for 1-to-1 chats uses the double-ratchet algorithm with
-  an X25519 handshake. Messages are encrypted client-side before being sent.
-- Group conversations are encrypted at rest with BYOK-managed keys. Tenant keys
-  are stored in AWS KMS following a pattern similar to Slack EKM.
-- Pluggable data-loss-prevention hooks scan outgoing messages and can integrate
-  with external services like the Nightfall DLP API
-- Per-room retention policies with legal hold and S3 export
-- Ephemeral messages that self-destruct after a short TTL
-- Two-factor authentication for account logins
-- Immutable, SHA-chained audit logs streamed to Kafka for SIEM integration
-- Enterprise identity via SAML 2.0 and OpenID Connect
-- SCIM-based user provisioning
-- Content Security Policy enforcement via `django-csp`
-- Structured JSON logging for SIEM integration
-- Production-ready ASGI server powered by Daphne
-- Role-based access control (Owner, Admin, Analyst)
-- Dockerised services for the application, MySQL database and Redis
-- Real-time telemetry with OpenTelemetry, Prometheus and Grafana
+## Architectural Highlights
 
-## Why use this?
-- Plug-and-play Docker deployment
-- Real-time updates powered by WebSockets
-- Encryption built-in for private chats
-- Robust rate limiting and security features
+- **ASGI-based real-time WebSocket infrastructure** backed by Django Channels and Daphne
+- **JWT-secured WebSocket connections**, enforcing session-based access and role validation
+- **Redis-powered message queueing** for transient communication and asynchronous background tasks
+- **OpenTelemetry integration** for distributed tracing across services
+- **Structured logging pipeline** compatible with ELK and SIEM platforms
+- **Docker-native orchestration** with support for CI/CD, multi-stage builds, and secure container isolation
+- **Full Helm + Kustomize Kubernetes support**, enabling rapid deployment across dev, staging, and production environments
+- **Pluggable encryption models**: 
+  - Client-side E2EE (1:1 chat using X25519/double-ratchet)
+  - Group key management with Bring Your Own Key (BYOK) and AWS KMS integration
+- **Security-first design**: DLP hooks, ephemeral messages, CSP enforcement, and automated vulnerability scanning
+- **SCIM-based user provisioning** and support for SAML 2.0 / OIDC enterprise identity providers
 
-![UI Screenshot](https://placehold.co/800x400?text=ChatApp+UI)
+## Core Capabilities
 
-## Quick Start
+- Persistent, rate-limited, encrypted chat messaging
+- Typing indicators and message lifecycle events
+- Real-time client feedback using WebSocket state tracking
+- API-level protection using DRF throttles and IP-aware middleware
+- Admin interface for managing user roles, rooms, and retention settings
+- Configurable self-destruction of messages via TTL/Celery
+- SHA-chained, tamper-evident audit logs (optional Kafka integration)
+- Fine-grained retention and legal hold enforcement
+- Metrics exposed via Prometheus-compatible HTTP endpoints
+
+## Technology Stack
+
+- **Backend:** Django 4.x, Django Channels, Redis, Daphne, Celery
+- **Auth:** JWT (via DRF), Django auth, SAML, OIDC, SCIM
+- **Security Tooling:** Bandit, Trivy, Gitleaks, CSP, HTTPS by default
+- **Observability:** OpenTelemetry, Prometheus, Jaeger, Grafana
+- **Containerization:** Docker, Docker Compose, Helm, Kustomize
+- **Tests:** Pytest with full coverage and CI assertions
+
+## Local Deployment (Docker)
+
 ### Prerequisites
-- Docker and Docker Compose
 
-### Run with Docker
+- Docker >= 24.0
+- Docker Compose >= 2.0
+
+### Run
+
 ```bash
-git clone <repo-url>
+git clone https://github.com/Psychevus/WebSocket-ChatApp.git
 cd WebSocket-ChatApp
 docker-compose build
 docker-compose up
-```
-The application will be available at `http://localhost:8000` and served by the Daphne ASGI server for optimal WebSocket performance.
+````
 
-Prometheus will expose metrics on `http://localhost:9090` and Grafana will be available at `http://localhost:3000` (default credentials `admin`/`admin`).
+* Application: [http://localhost:8000](http://localhost:8000)
+* Prometheus Metrics: [http://localhost:9090](http://localhost:9090)
+* Grafana: [http://localhost:3000](http://localhost:3000) (default: `admin` / `admin`)
+* Jaeger UI: [http://localhost:16686](http://localhost:16686)
 
-## Telemetry
-Metrics are exported using OpenTelemetry and Prometheus. Grafana Live can be used to visualise latency in real time. The Prometheus scrape endpoint is exposed on port `8001` from the Django container.
-The metrics HTTP server exposes `/metrics` so Prometheus can scrape `http://localhost:8001/metrics`.
-Import `docs/grafana-dashboard.json` into Grafana to view a panel showing the P95 WebSocket latency.
+## Testing & Code Quality
 
-Jaeger is included in the Docker Compose stack for distributed tracing. The Django service exports spans to the Jaeger agent automatically and the UI is available at `http://localhost:16686`.
-
-## Running Tests
-Install the development dependencies and run the suite with `pytest`. The test
-settings use SQLite and an in-memory channel layer so no external services are
-required. Test coverage is collected automatically and must exceed 80%:
 ```bash
 pip install -r requirements-dev.txt
-pytest
+pytest --cov=ChatApp --cov=WebSocketChatApp
 ```
 
-Periodically clear expired messages using:
-```bash
-python manage.py expunge_old_messages
-```
+* Coverage must exceed 80% (enforced via CI)
+* Static analysis: `bandit`, `gitleaks`, `trivy` scans triggered on push
+* Linting, secret detection, and dependency vulnerability audits are automated
 
-Ephemeral messages are purged automatically via Celery beat. Start a worker with:
-```bash
-celery -A WebSocketChatApp worker -B
-```
+## CI/CD Pipeline
 
-## Deployment
-Update environment variables as required for your platform. The provided Docker configuration can be adapted for cloud container services. A Helm chart and Kustomize overlays are also available under `deploy/` for Kubernetes environments.
+The GitHub Actions workflow includes:
 
-### Kubernetes Deployment with Helm
-```bash
-helm install chatapp ./deploy/helm \
-  --set encryption.key=$(base64 -w0 <path to key>) \
-  --set saml.configPath=/etc/saml/config.json \
-  --set scim.bearerToken=$SCIM_TOKEN
-```
-Environment specific values are provided. Select a file with `-f`:
+* Python environment bootstrap and dependency installation
+* Unit/integration test execution with coverage
+* Coverage summary export in Cobertura-compatible XML and JSON
+* Security scanning (code, secrets, container images)
+* Docker image build via BuildKit
+* Conditional Helm chart packaging (for release branches)
+* CVSS-aware failure thresholds on container vulnerabilities
+
+## Kubernetes Deployment
+
+### Helm
+
 ```bash
 helm install chatapp ./deploy/helm -f deploy/helm/values-dev.yaml
-# or
+```
+
+For production overlays:
+
+```bash
 helm install chatapp ./deploy/helm -f deploy/helm/values-prod.yaml
 ```
-The chart provisions MySQL and Redis alongside the Django application so you can get running in minutes.
 
-### Kustomize Overlays
-Example overlays are located in `deploy/kustomize/overlays/`. Build the base manifests and apply an overlay with:
-```bash
-kustomize build deploy/kustomize/overlays/example | kubectl apply -f -
-```
-
-Blue/green deployment manifests are also available:
+### Kustomize
 
 ```bash
-kustomize build deploy/kustomize/overlays/blue | kubectl apply -f -
-kustomize build deploy/kustomize/overlays/green | kubectl apply -f -
+kustomize build deploy/kustomize/overlays/dev | kubectl apply -f -
 ```
 
-After verifying the green rollout, run `scripts/rollout_to_green.sh` to shift
-all traffic to the green service.
+Blue/green strategy supported. Rollout switch via:
 
-Further guidance on horizontal scaling and enterprise deployment is available in [docs/scaling.md](docs/scaling.md).
-
-## Security Configuration
-A checklist of common security considerations is available in [OWASP_SECURITY.md](OWASP_SECURITY.md). Sensitive settings are read from environment variables such as:
+```bash
+bash ./scripts/rollout_to_green.sh
 ```
-DJANGO_SECRET_KEY=<your secret key>
-DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=example.com,www.example.com
-DJANGO_SECURE_SSL_REDIRECT=True
-DJANGO_SECURE_HSTS_SECONDS=3600
-MYSQL_DATABASE=chatapp
-MYSQL_USER=chatapp
-MYSQL_PASSWORD=<db password>
-MYSQL_HOST=chatapp-db
-REDIS_HOST=chatapp-redis
-MESSAGE_ENCRYPTION_KEY=<base64 key for BYOK>
-KMS_KEY_ID=<AWS KMS key ID for BYOK/EKM>
-DLP_BEFORE_SEND_HOOK=ChatApp.dlp.default_dlp_callback
-NIGHTFALL_API_KEY=<optional Nightfall API key>
-ORG_RETENTION_DAYS=30
-WORKSPACE_RETENTION_DAYS=30
-EXPUNGE_S3_BUCKET=<optional S3 bucket for exports>
-CELERY_BROKER_URL=redis://chatapp-redis:6379/0
-EPHEMERAL_MESSAGE_TTL=30
-MESSAGE_MAX_LENGTH=500
-KAFKA_BROKER_URL=<optional Kafka broker for audit logs>
-SAML_CONFIG_PATH=<path to saml config json>
-OIDC_CLIENT_ID=<OIDC client id>
-OIDC_CLIENT_SECRET=<OIDC client secret>
-SCIM_BEARER_TOKEN=<token for SCIM auth>
-TOTP_ENFORCE=True
-LOG_JSON=False  # set to True for structured logs
-CSP_REPORT_ONLY=False  # enable report-only mode for CSP
-```
-Ensure HTTPS is enabled and cookies are transmitted securely.
 
-### Data Loss Prevention
+## Message Encryption
 
-Enable Nightfall DLP scanning by setting:
+### One-to-One E2EE
+
+* X25519 handshake
+* Double-ratchet encryption model (similar to Signal protocol)
+* Messages encrypted on the client before transmission
+
+### Group BYOK
+
+* Server-side encrypted using a unique per-group AES key
+* BYOK stored in AWS KMS; rotation schedule configurable
+* Legal hold and S3 export supported via background jobs
+
+## Data Loss Prevention (DLP)
+
+To enable Nightfall scanning on message transmission:
 
 ```bash
 DLP_BEFORE_SEND_HOOK=ChatApp.dlp_plugins.nightfall_scan
-NIGHTFALL_API_KEY=<your Nightfall API key>
+NIGHTFALL_API_KEY=<token>
 ```
-Messages will be inspected by Nightfall before delivery.
 
-## Entra ID SAML + SCIM Setup
+## Security Practices
 
-For a walk-through of enabling single sign-on with Microsoft Entra ID and configuring automatic user and group provisioning, see [docs/entra-id-sso-scim.md](docs/entra-id-sso-scim.md).
+* TLS required in production
+* Secure, HttpOnly cookies
+* CSP configured via `django-csp`
+* Session management hardened against CSRF and replay attacks
+* Audit logs chained and immutable
+* Optional Kafka broker for security event streaming
+* Entra ID (Azure AD) support for SAML SSO and SCIM provisioning
+
+## Environment Configuration
+
+```ini
+DJANGO_SECRET_KEY=...
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=example.com
+MYSQL_USER=chatapp
+MYSQL_PASSWORD=...
+REDIS_HOST=chatapp-redis
+MESSAGE_ENCRYPTION_KEY=...
+KMS_KEY_ID=...
+CELERY_BROKER_URL=redis://chatapp-redis:6379/0
+EPHEMERAL_MESSAGE_TTL=30
+DLP_BEFORE_SEND_HOOK=...
+NIGHTFALL_API_KEY=...
+KAFKA_BROKER_URL=...
+TOTP_ENFORCE=True
+CSP_REPORT_ONLY=False
+```
+
+## Documentation
+
+* [docs/scaling.md](docs/scaling.md): Horizontal scaling guidelines
+* [docs/entra-id-sso-scim.md](docs/entra-id-sso-scim.md): Entra SSO + SCIM setup
+* [OWASP\_SECURITY.md](OWASP_SECURITY.md): Secure deployment checklist
 
 ## Contributing
-Contributions are welcome! Please open pull requests and ensure the test suite passes.
+
+Please ensure all tests pass locally before submitting a pull request. Code must conform to repository linting and security policies. Feature proposals should be documented via GitHub Issues.
 
 ## License
-This project is available under the [MIT License](LICENSE).
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
