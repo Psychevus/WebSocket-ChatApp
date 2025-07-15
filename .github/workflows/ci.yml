@@ -26,7 +26,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          coverage run -m pytest --cov=ChatApp --cov=WebSocketChatApp
+          coverage run --source=ChatApp,WebSocketChatApp -m pytest
           coverage xml
           coverage report -m > coverage.txt
 
