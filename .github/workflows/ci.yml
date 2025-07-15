@@ -29,13 +29,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
-          pip install bandit coverage
+          pip install bandit pytest-cov
 
       - name: Run tests and collect coverage
         run: |
-          coverage run --source=ChatApp,WebSocketChatApp -m pytest -q
-          coverage xml -o coverage.xml
-          coverage report -m > coverage.txt
+          pytest --cov=ChatApp --cov=WebSocketChatApp \
+                 --cov-report=xml:coverage.xml \
+                 --cov-report=term > coverage.txt
 
       - name: Extract coverage percent
         id: extract_coverage
