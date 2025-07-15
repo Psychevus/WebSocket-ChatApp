@@ -2,95 +2,156 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   test-and-scan:
     runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: "UTF-8"
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v3
+      # ────────────────────────────────
+      # 1. Check out repository
+      # ────────────────────────────────
+      - name: Check out code
+        uses: actions/checkout@v4
         with:
-          python-version: '3.11'
+          fetch-depth: 0   # full history for accurate lint / blame if needed
 
-      - name: Install dependencies
+      # ────────────────────────────────
+      # 2. Set up Python with cache
+      # ────────────────────────────────
+      - name: Set up Python 3.11
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ────────────────────────────────
+      # 3. Install dependencies
+      # ────────────────────────────────
+      - name: Install project and security tooling
         run: |
+          echo "::group::Installing dependencies"
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
           pip install bandit coverage
+          echo "::endgroup::"
 
-      - name: Run tests with coverage
+      # ────────────────────────────────
+      # 4. Run tests + coverage
+      # ────────────────────────────────
+      - name: Execute tests and collect coverage
         run: |
-          coverage run --source=ChatApp,WebSocketChatApp -m pytest
-          coverage xml
+          echo "::group::pytest"
+          coverage run --source=ChatApp,WebSocketChatApp -m pytest -q
+          echo "::endgroup::"
+          coverage xml -o coverage.xml
           coverage report -m > coverage.txt
 
-      - name: Generate coverage-summary.json
+      # ────────────────────────────────
+      # 5. Fail if coverage < 70 %
+      #    (change the threshold as needed)
+      # ────────────────────────────────
+      - name: Enforce minimum coverage
+        run: |
+          RATE=$(awk '$1 == "TOTAL" {gsub("%",""); print $(NF)}' coverage.txt)
+          echo "Total coverage: $RATE %"
+          THRESHOLD=70
+          if [ "$(echo "$RATE < $THRESHOLD" | bc -l)" -eq 1 ]; then
+            echo "Coverage is below ${THRESHOLD}% – failing the build."
+            exit 1
+          fi
+
+      # ────────────────────────────────
+      # 6. Generate coverage-summary.json (only on main)
+      # ────────────────────────────────
+      - name: Generate JSON summary
         if: github.ref == 'refs/heads/main'
         run: |
-          RATE=$(awk '/TOTAL/ {gsub("%",""); printf "%.2f", $4}' coverage.txt)
-          if [ -z "$RATE" ]; then
-            echo "Coverage extraction failed. Setting line_rate_pct to 0.00"
-            RATE=0.00
-          fi
-          echo "{ \"line_rate_pct\": $RATE }" > coverage-summary.json
+          RATE=$(awk '$1 == "TOTAL" {gsub("%",""); printf "%.2f", $(NF)}' coverage.txt)
+          printf '{ "line_rate_pct": %.2f }\n' "$RATE" > coverage-summary.json
+          cat coverage-summary.json
 
-      - name: Commit coverage reports
+      - name: Commit coverage artefacts
         if: github.ref == 'refs/heads/main'
         uses: EndBug/add-and-commit@v9
         with:
           add: |
             coverage.xml
             coverage-summary.json
-          message: Update coverage reports [skip ci]
+          message: chore(ci): update coverage artefacts [skip ci]
 
-      - name: Bandit Scan
-        run: bandit -r websocket_chatapp -lll -f json -o bandit.json
+      # ────────────────────────────────
+      # 7. Bandit static analysis
+      # ────────────────────────────────
+      - name: Run Bandit (SAST)
+        run: |
+          echo "::group::Bandit scan"
+          bandit -r websocket_chatapp -lll -f json -o bandit.json
+          echo "::endgroup::"
 
-      - name: Set up Docker Buildx
+      # ────────────────────────────────
+      # 8. Build Docker image (Buildx + cache)
+      # ────────────────────────────────
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build Docker image
+      - name: Build application image
         uses: docker/build-push-action@v5
         with:
           context: .
           tags: chatapp:test
           load: true
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to:   type=gha,mode=max
 
-      - name: Trivy Image Scan
+      # ────────────────────────────────
+      # 9. Trivy image vulnerability scan
+      # ────────────────────────────────
+      - name: Scan image with Trivy
         id: trivy
         uses: aquasecurity/trivy-action@0.31.0
         with:
           image-ref: chatapp:test
           format: json
           output: trivy-image.json
-          ignore-unfixed: true
-          exit-code: 0
+          ignore-unfixed: true     # suppress non-fixed CVEs
+          exit-code: 0             # allow post-processing
 
-      - name: Fail on CVSS > 7
+      - name: Fail pipeline if CVSS high/critical
         run: |
+          echo "::group::Evaluating Trivy results"
           if jq '.Results[].Vulnerabilities[] | select((.CVSS.nvd.V3Score // 0) > 7)' trivy-image.json | grep -q .; then
-            echo 'Vulnerabilities with CVSS > 7 found'
+            echo 'High/critical CVEs detected (CVSS > 7) – failing build.'
             exit 1
           fi
+          echo "::endgroup::"
 
-      - name: Install gitleaks
+      # ────────────────────────────────
+      # 10. Secrets detection with Gitleaks
+      # ────────────────────────────────
+      - name: Install Gitleaks
         run: |
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
           tar -xzf gitleaks.tar.gz gitleaks
           sudo mv gitleaks /usr/local/bin/
 
-      - name: Scan secrets with gitleaks
-        run: gitleaks detect --source . --no-git -c .gitleaks.toml --report-format=json --report-path=gitleaks.json
+      - name: Scan repository for secrets
+        run: |
+          echo "::group::Gitleaks"
+          gitleaks detect --source . --no-git -c .gitleaks.toml \
+            --report-format json --report-path gitleaks.json
+          echo "::endgroup::"
 
-      - name: Upload artifacts
+      # ────────────────────────────────
+      # 11. Upload artefacts
+      # ────────────────────────────────
+      - name: Publish security artefacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
