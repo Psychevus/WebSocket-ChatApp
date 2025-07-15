@@ -1,8 +1,12 @@
 [run]
-source = tests
+source = ChatApp,WebSocketChatApp
 omit =
+    */migrations/*
+    */tests/*
     */sitecustomize.py
 
 [report]
+show_missing = True
 exclude_lines =
     pragma: no cover
+    if __name__ == '__main__':
