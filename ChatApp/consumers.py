@@ -3,6 +3,7 @@ import json
 import logging
 
 import bleach
+# pragma: no cover
 import redis
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer

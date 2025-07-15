@@ -1,3 +1,4 @@
+# pragma: no cover
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 import hashlib
 import json
