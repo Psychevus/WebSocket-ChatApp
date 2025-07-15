@@ -58,6 +58,10 @@ jobs:
           RATE=$(awk '$1 == "TOTAL" {gsub("%",""); printf "%.2f", $(NF)}' coverage.txt)
           echo "coverage=$RATE" >> $GITHUB_OUTPUT
 
+      - name: Ensure badge folder exists
+        if: github.ref == 'refs/heads/main'
+        run: mkdir -p .github/badges
+
       - name: 🏷️ Generate coverage badge
         if: github.ref == 'refs/heads/main'
         uses: emibcn/badge-action@v1
