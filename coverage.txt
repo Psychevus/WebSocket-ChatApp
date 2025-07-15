@@ -81,4 +81,4 @@ WebSocketChatApp/wsgi.py                          5      0   100%
 ---------------------------------------------------------------------------
 TOTAL                                           209     23    89%
 Coverage XML written to file coverage.xml
-======================= 73 passed, 3 warnings in 24.17s ========================
+======================= 73 passed, 3 warnings in 24.64s ========================
