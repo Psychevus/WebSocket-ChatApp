@@ -3,6 +3,9 @@ from collections import abc
 
 from .settings import *  # noqa
 
+# Always use builtin auth in tests
+USE_DEV_AUTH = True
+
 for name in ("MutableSet", "MutableMapping", "MutableSequence", "Mapping", "Iterable"):
     if not hasattr(collections, name):
         setattr(collections, name, getattr(abc, name))

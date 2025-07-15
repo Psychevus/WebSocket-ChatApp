@@ -13,7 +13,14 @@ from chat.licensing import (
 urlpatterns = [
     path('admin/audit-logs/', chat_views.audit_logs_view, name='audit_logs'),
     path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
+]
+
+if settings.USE_DEV_AUTH:
+    urlpatterns += [path('accounts/', include('django.contrib.auth.urls'))]
+else:
+    urlpatterns += [path('accounts/', include('allauth.urls'))]
+
+urlpatterns += [
     path('api/', include('ChatApp.api_urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
