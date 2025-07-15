@@ -2,9 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+  workflow_dispatch:
 
 jobs:
   test-and-scan:
@@ -13,90 +14,52 @@ jobs:
       PYTHONIOENCODING: "UTF-8"
 
     steps:
-      # ───────────────────────────────────────────────
-      # 1. Checkout
-      # ───────────────────────────────────────────────
-      - name: 🔄 Check out code
+      - name: Check out code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ───────────────────────────────────────────────
-      # 2. Setup Python + cache pip
-      # ───────────────────────────────────────────────
-      - name: 🐍 Set up Python 3.11
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache: "pip"
+          cache: pip
 
-      # ───────────────────────────────────────────────
-      # 3. Install deps & tooling
-      # ───────────────────────────────────────────────
-      - name: 📦 Install dependencies & tooling
+      - name: Install dependencies & tooling
         run: |
-          echo "::group::Installing dependencies"
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
           pip install bandit coverage
-          echo "::endgroup::"
 
-      # ───────────────────────────────────────────────
-      # 4. Run tests & produce coverage reports
-      # ───────────────────────────────────────────────
-      - name: 🧪 Run tests and collect coverage
+      - name: Run tests and collect coverage
         run: |
-          echo "::group::pytest"
           coverage run --source=ChatApp,WebSocketChatApp -m pytest -q
-          echo "::endgroup::"
-          # XML report for downstream tools
           coverage xml -o coverage.xml
-          # human-readable text report
           coverage report -m > coverage.txt
-          echo "::group::Coverage report"
-          cat coverage.txt
-          echo "::endgroup::"
 
-      # ───────────────────────────────────────────────
-      # 5. Extract coverage percentage
-      # ───────────────────────────────────────────────
-      - name: 📤 Extract coverage percent
+      - name: Extract coverage percent
         id: extract_coverage
         run: |
-          # find the TOTAL line, strip '%' and take last column
           RATE=$(awk '/^TOTAL/ { gsub("%",""); print $NF }' coverage.txt)
-          # default to 0.00 if empty
           if [ -z "$RATE" ]; then
-            echo "WARNING: could not parse coverage; defaulting to 0.00"
             RATE="0.00"
           fi
-          echo "extracted coverage=$RATE"  
           echo "coverage=$RATE" >> $GITHUB_OUTPUT
 
-      # ───────────────────────────────────────────────
-      # 6. Enforce minimum coverage (fail build if below threshold)
-      # ───────────────────────────────────────────────
-      - name: ✅ Enforce minimum coverage
+      - name: Enforce minimum coverage
         run: |
           RATE="${{ steps.extract_coverage.outputs.coverage }}"
-          echo "📊 Total test coverage: $RATE%"
           THRESHOLD=70
           if (( $(echo "$RATE < $THRESHOLD" | bc -l) )); then
-            echo "❌ Coverage $RATE% is below ${THRESHOLD}% — failing build."
+            echo "Coverage $RATE% is below ${THRESHOLD}% – failing build."
             exit 1
           fi
 
-      # ───────────────────────────────────────────────
-      # 7. Prepare badge directory
-      # ───────────────────────────────────────────────
-      - name: 🗂 Ensure badge folder exists
+      - name: Ensure badge folder exists
         if: github.ref == 'refs/heads/main'
         run: mkdir -p .github/badges
 
-      # ───────────────────────────────────────────────
-      # 8. Generate coverage badge
-      # ───────────────────────────────────────────────
-      - name: 🏷️ Generate coverage badge
+      - name: Generate coverage badge
         if: github.ref == 'refs/heads/main'
         uses: emibcn/badge-action@v1
         with:
@@ -105,10 +68,7 @@ jobs:
           color: green
           path: .github/badges/coverage.svg
 
-      # ───────────────────────────────────────────────
-      # 9. Commit coverage reports & badge
-      # ───────────────────────────────────────────────
-      - name: 📌 Commit coverage artefacts
+      - name: Commit coverage artefacts
         if: github.ref == 'refs/heads/main'
         uses: EndBug/add-and-commit@v9
         with:
@@ -116,36 +76,24 @@ jobs:
             coverage.xml
             coverage.txt
             .github/badges/coverage.svg
-          message: chore(ci): update coverage reports & badge [skip ci]
+          message: "chore(ci): update coverage reports & badge [skip ci]"
 
-      # ───────────────────────────────────────────────
-      # 10. Bandit static analysis
-      # ───────────────────────────────────────────────
-      - name: 🛡️ Run Bandit
-        run: |
-          echo "::group::Bandit scan"
-          bandit -r websocket_chatapp -lll -f json -o bandit.json
-          echo "::endgroup::"
+      - name: Run Bandit
+        run: bandit -r websocket_chatapp -lll -f json -o bandit.json
 
-      # ───────────────────────────────────────────────
-      # 11. Build Docker image (Buildx + cache)
-      # ───────────────────────────────────────────────
-      - name: 🐳 Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: 🏗️ Build Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           tags: chatapp:test
           load: true
           cache-from: type=gha
-          cache-to:   type=gha,mode=max
+          cache-to: type=gha,mode=max
 
-      # ───────────────────────────────────────────────
-      # 12. Trivy vulnerability scan
-      # ───────────────────────────────────────────────
-      - name: 🔍 Scan image with Trivy
+      - name: Scan image with Trivy
         id: trivy
         uses: aquasecurity/trivy-action@0.31.0
         with:
@@ -155,35 +103,22 @@ jobs:
           ignore-unfixed: true
           exit-code: 0
 
-      - name: 🚨 Fail on high CVSS
+      - name: Fail on high CVSS
         run: |
-          echo "::group::Evaluating Trivy results"
           if jq '.Results[].Vulnerabilities[] | select((.CVSS.nvd.V3Score // 0) > 7)' trivy-image.json | grep -q .; then
-            echo "❌ High/critical CVEs (CVSS > 7) — failing build."
             exit 1
           fi
-          echo "::endgroup::"
 
-      # ───────────────────────────────────────────────
-      # 13. Secret scanning with Gitleaks
-      # ───────────────────────────────────────────────
-      - name: 🔐 Install Gitleaks
+      - name: Install Gitleaks
         run: |
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
           tar -xzf gitleaks.tar.gz gitleaks
           sudo mv gitleaks /usr/local/bin/
 
-      - name: 🔍 Run Gitleaks
-        run: |
-          echo "::group::Gitleaks scan"
-          gitleaks detect --source . --no-git -c .gitleaks.toml \
-            --report-format json --report-path gitleaks.json
-          echo "::endgroup::"
+      - name: Run Gitleaks
+        run: gitleaks detect --source . --no-git -c .gitleaks.toml --report-format json --report-path gitleaks.json
 
-      # ───────────────────────────────────────────────
-      # 14. Upload security artefacts
-      # ───────────────────────────────────────────────
-      - name: ☁️ Upload security artefacts
+      - name: Upload security artefacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
