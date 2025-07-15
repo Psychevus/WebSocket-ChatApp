@@ -32,8 +32,17 @@ jobs:
       - name: Bandit Scan
         run: bandit -r websocket_chatapp -lll -f json -o bandit.json
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Build Docker image
-        run: docker build -t chatapp:test .
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: chatapp:test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Trivy Image Scan
         id: trivy
@@ -52,14 +61,14 @@ jobs:
             exit 1
           fi
 
-        - name: Install gitleaks
-          run: |
-            curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
-            tar -xzf gitleaks.tar.gz gitleaks
-            sudo mv gitleaks /usr/local/bin/
+      - name: Install gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/
 
-        - name: Scan secrets with gitleaks
-          run: gitleaks detect --source . --no-git --report-format=json --report-path=gitleaks.json
+      - name: Scan secrets with gitleaks
+        run: gitleaks detect --source . --no-git --report-format=json --report-path=gitleaks.json
 
       - name: Upload artifacts
         if: always()
