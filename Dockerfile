@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.11
+FROM python:3.11-slim
 
 LABEL maintainer="Psychevus"
 LABEL description="Django WebSocket Chat App"
@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y gcc libffi-dev libssl-dev && \
+    apt-get install -y --no-install-recommends gcc libffi-dev libssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies first to leverage Docker layer caching
