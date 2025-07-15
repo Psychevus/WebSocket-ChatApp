@@ -15,6 +15,8 @@ services:
       DJANGO_SETTINGS_MODULE: WebSocketChatApp.settings
       DEBUG: "True"
       METRICS_PORT: "8001"
+      JAEGER_HOST: jaeger
+      JAEGER_PORT: "6831"
     healthcheck:
       test: [ "CMD", "python", "manage.py", "check" ]
       interval: 30s
@@ -40,6 +42,13 @@ services:
     container_name: chatapp-redis
     ports:
       - "6379:6379"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "6831:6831/udp"
 
   prometheus:
     image: prom/prometheus
