@@ -17,3 +17,4 @@ logs/logging.log
 *.tfstate
 *.tfstate.*
 .terraform/
+.env.render

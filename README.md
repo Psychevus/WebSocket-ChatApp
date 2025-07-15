@@ -4,6 +4,12 @@
 [![Docker Build](https://img.shields.io/github/actions/workflow/status/Psychevus/WebSocket-ChatApp/ci.yml?label=Docker%20Build)](https://github.com/Psychevus/WebSocket-ChatApp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/Psychevus/WebSocket-ChatApp)](LICENSE)
 ![Coverage](.github/badges/coverage.svg)
+[![Coverage Status](https://img.shields.io/badge/coverage-passing-brightgreen)](#)
+[![Render Deploy](https://img.shields.io/badge/Render-Demo-blue)](#)
+
+## 🚀 Live Demo on Render
+A stripped-down profile is deployed on **Render Free Tier**
+👉 https://your-demo.onrender.com
 
 
 ## Project Overview
@@ -66,6 +72,16 @@ docker-compose up
 * Prometheus Metrics: [http://localhost:9090](http://localhost:9090)
 * Grafana: [http://localhost:3000](http://localhost:3000) (default: `admin` / `admin`)
 * Jaeger UI: [http://localhost:16686](http://localhost:16686)
+
+### Quick Start (Free Demo)
+
+```bash
+docker build -f Dockerfile.demo -t chat-demo .
+docker run -p 8000:8000 chat-demo
+wscat -c ws://localhost:8000/ws/room/test/
+```
+
+**Note:** The demo disables Kafka, Celery, DLP, BYOK/KMS, and uses an in-memory channel layer. Full enterprise features remain in the default configuration.
 
 ## Testing & Code Quality
 

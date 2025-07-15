@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+COPY . .
+ENV DJANGO_SETTINGS_MODULE=WebSocketChatApp.settings_demo
+
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "WebSocketChatApp.asgi:application"]
