@@ -82,6 +82,7 @@ wscat -c ws://localhost:8000/ws/room/test/
 
 ```bash
 pip install -r requirements-dev.txt
+pip install -r requirements.txt  # includes cryptography for file encryption
 pytest --cov=ChatApp --cov=WebSocketChatApp
 ```
 
