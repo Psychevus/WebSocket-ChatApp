@@ -4,38 +4,39 @@ django: version: 4.2.23, settings: WebSocketChatApp.test_settings (from ini)
 rootdir: /home/runner/work/WebSocket-ChatApp/WebSocket-ChatApp
 configfile: pytest.ini
 testpaths: tests, ChatApp/tests
-plugins: cov-6.2.1, asyncio-1.0.0, django-4.11.1
+plugins: cov-6.2.1, asyncio-1.1.0, django-4.11.1
 asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 73 items
+collected 76 items
 
 tests/test_additional.py .....                                           [  6%]
 tests/test_auth.py ..                                                    [  9%]
 tests/test_commands.py ...                                               [ 13%]
-tests/test_messages.py .                                                 [ 15%]
-tests/test_tasks.py ...                                                  [ 19%]
+tests/test_messages.py .                                                 [ 14%]
+tests/test_tasks.py ...                                                  [ 18%]
 ChatApp/tests/test_audit.py ..                                           [ 21%]
-ChatApp/tests/test_ephemeral.py .                                        [ 23%]
-ChatApp/tests/test_expunge.py ..                                         [ 26%]
-ChatApp/tests/test_fixtures.py .                                         [ 27%]
-ChatApp/tests/test_forms.py ......                                       [ 35%]
-ChatApp/tests/test_gdpr.py ..                                            [ 38%]
-ChatApp/tests/test_integration.py .....                                  [ 45%]
-ChatApp/tests/test_licensing.py ...                                      [ 49%]
-ChatApp/tests/test_models.py .....                                       [ 56%]
-ChatApp/tests/test_receipts.py .                                         [ 57%]
-ChatApp/tests/test_retention_policy.py ..                                [ 60%]
-ChatApp/tests/test_views.py .......                                      [ 69%]
-tests/test_rooms.py .                                                    [ 71%]
-tests/test_websocket.py ...                                              [ 75%]
-tests/test_ws.py .                                                       [ 76%]
-ChatApp/tests/test_consumers.py ..                                       [ 79%]
-ChatApp/tests/test_dlp.py ..                                             [ 82%]
-ChatApp/tests/test_sanitization.py ..                                    [ 84%]
-tests/test_additional.py ...                                             [ 89%]
-tests/test_asgi_wsgi.py ..                                               [ 91%]
-tests/test_commands.py .                                                 [ 93%]
-tests/test_console_tracer.py .                                           [ 94%]
-tests/test_dlp_plugins.py ..                                             [ 97%]
+ChatApp/tests/test_ephemeral.py .                                        [ 22%]
+ChatApp/tests/test_expunge.py ..                                         [ 25%]
+ChatApp/tests/test_fixtures.py .                                         [ 26%]
+ChatApp/tests/test_forms.py ......                                       [ 34%]
+ChatApp/tests/test_gdpr.py ..                                            [ 36%]
+ChatApp/tests/test_integration.py .....                                  [ 43%]
+ChatApp/tests/test_licensing.py ...                                      [ 47%]
+ChatApp/tests/test_models.py .....                                       [ 53%]
+ChatApp/tests/test_receipts.py .                                         [ 55%]
+ChatApp/tests/test_retention_policy.py ..                                [ 57%]
+ChatApp/tests/test_views.py .......                                      [ 67%]
+tests/test_rooms.py .                                                    [ 68%]
+tests/test_websocket.py ...                                              [ 72%]
+tests/test_ws.py .                                                       [ 73%]
+ChatApp/tests/test_consumers.py ..                                       [ 76%]
+ChatApp/tests/test_dlp.py ..                                             [ 78%]
+ChatApp/tests/test_sanitization.py ..                                    [ 81%]
+tests/test_additional.py ...                                             [ 85%]
+tests/test_asgi_wsgi.py ..                                               [ 88%]
+tests/test_commands.py .                                                 [ 89%]
+tests/test_console_tracer.py .                                           [ 90%]
+tests/test_dlp_plugins.py ..                                             [ 93%]
+tests/test_file_crypto.py ...                                            [ 97%]
 tests/test_kms.py ..                                                     [100%]
 
 =============================== warnings summary ===============================
@@ -61,6 +62,7 @@ ChatApp/__init__.py                               0      0   100%
 ChatApp/admin.py                                  1      0   100%
 ChatApp/api_urls.py                               3      0   100%
 ChatApp/apps.py                                   4      0   100%
+ChatApp/file_crypto.py                           67     10    85%   67-70, 82, 102, 109-112
 ChatApp/forms.py                                 46      0   100%
 ChatApp/huddle/__init__.py                        0      0   100%
 ChatApp/kms.py                                   25      0   100%
@@ -79,6 +81,6 @@ WebSocketChatApp/telemetry.py                    31      0   100%
 WebSocketChatApp/test_settings.py                13      0   100%
 WebSocketChatApp/wsgi.py                          5      0   100%
 ---------------------------------------------------------------------------
-TOTAL                                           209     23    89%
+TOTAL                                           276     33    88%
 Coverage XML written to file coverage.xml
-======================= 73 passed, 3 warnings in 24.64s ========================
+======================= 76 passed, 3 warnings in 24.83s ========================
