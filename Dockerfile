@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.11-slim
+FROM python:3.11.13-slim-bullseye
 
 LABEL maintainer="Psychevus"
 LABEL description="Django WebSocket Chat App"
@@ -9,7 +9,6 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends gcc libffi-dev libssl-dev \
         default-libmysqlclient-dev && \
     rm -rf /var/lib/apt/lists/*
